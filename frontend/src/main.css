@@ -4,3 +4,544 @@ body {
   background: #f6f8fb;
   color: #0f172a;
 }
+
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.device-frame-outer {
+  width: 100%;
+  height: calc(100svh - 48px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+.device-frame {
+  /* fixed base size; JS scales this container to fit viewport */
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    0 12px 24px rgba(0, 0, 0, 0.12);
+  background: #000;
+  display: flex;
+  position: relative;
+}
+
+.screen-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  display: block;
+  background: #000;
+}
+
+.device-content {
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography (approximate Figma defaults; adjust as needed) */
+.typo-title {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 800;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: #0f172a;
+}
+.typo-subtitle {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 6px 0 0 0;
+  color: #334155;
+}
+.typo-body {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  color: #0f172a;
+}
+
+/* Buttons */
+.btn {
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.btn-full {
+  width: 100%;
+}
+.btn-primary {
+  color: white;
+  background: #0052cc;
+}
+.btn-primary:hover {
+  background: #0044aa;
+}
+.btn-secondary {
+  color: #0f172a;
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+.btn-secondary:hover {
+  background: #e2e8f0;
+}
+.btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Generic screen layout areas */
+.screen {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100%;
+  padding: 20px 20px 24px;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+.screen.title-screen {
+  /* Gradient approximating the Figma home */
+  background: linear-gradient(180deg, #2a3f5d 0%, #2a3f5d 40%, #c15633 100%);
+  padding: 16px 16px 22px;
+}
+
+/* Auth screens */
+.screen.auth-screen {
+  background: linear-gradient(180deg, #1e2c41 0%, #22334a 40%, #0f2336 100%);
+}
+.auth-content {
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+.auth-form {
+  width: 100%;
+  max-width: 320px;
+  display: grid;
+  gap: 10px;
+}
+.auth-label {
+  display: grid;
+  gap: 6px;
+  color: #d5e0ee;
+  font-size: 13px;
+}
+.auth-input {
+  appearance: none;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #2b3d54;
+  background: #0f1e2d;
+  color: #e9f1ff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.auth-input:focus {
+  outline: 2px solid #f4ad7e;
+  outline-offset: 0;
+}
+.auth-error {
+  background: #fee2e2;
+  color: #7f1d1d;
+  border: 1px solid #fecaca;
+  padding: 8px 10px;
+  border-radius: 8px;
+  max-width: 320px;
+}
+.auth-link {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: #e5edf8;
+  text-decoration: underline;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* Match app CTA color palette on auth screens */
+.screen.auth-screen .btn {
+  background: #f4ad7e;          /* peach CTA like Title screen */
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15), 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+.screen.auth-screen .btn:hover {
+  background: #eba16f;
+}
+.screen.auth-screen .typo-title {
+  color: #ffffff;
+}
+.screen.auth-screen .typo-body {
+  color: #cfe0f5;
+}
+.screen-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+.screen-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+.screen.passion-screen .screen-content {
+  justify-content: center;
+  align-items: center;
+}
+.screen-footer {
+  margin-top: 8px;
+}
+
+/* Title screen specifics */
+.title-screen .title-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-top: 16px;
+}
+.title-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 0;
+  flex: 1;
+}
+.title-hero-img {
+  width: 80%;
+  height: auto;
+  object-fit: contain;
+}
+.title-actions {
+  margin-top: auto;
+}
+
+/* New: Title illustration uses the exported full screen but cropped to top */
+.title-illustration {
+  position: relative;
+  height: 58%;
+  min-height: 380px;
+  max-height: 480px;
+  overflow: hidden;
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+}
+.title-illustration-img {
+  width: 100%;
+  height: 120%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+  filter: saturate(1.02);
+}
+.title-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.asq-title {
+  font-family: 'Fredoka', 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: 1px;
+  color: #ffffff;
+  text-align: center;
+  margin: 0;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+.asq-subtitle {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  color: #d8e1ee;
+  margin: 0;
+  text-align: center;
+}
+.asq-cta {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-weight: 700;
+  font-size: 16px;
+  color: #ffffff;
+  background: #f4ad7e;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15), 0 8px 18px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+}
+.asq-cta:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15), 0 6px 12px rgba(0, 0, 0, 0.18);
+}
+
+/* Fun & Studies */
+.fun-screen .card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.card {
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.card-img {
+  width: 100%;
+  height: 120px;
+  object-fit: contain;
+}
+
+/* Partner screen */
+.partner-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+.partner-card {
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.partner-card.is-selected {
+  outline: 2px solid #0052cc;
+  outline-offset: 0;
+  border-color: #0052cc;
+  background: #eff6ff;
+}
+.partner-img {
+  width: 100%;
+  height: 120px;
+  object-fit: contain;
+}
+.partner-label {
+  font-weight: 600;
+  font-size: 14px;
+}
+.controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.control-button {
+  appearance: none;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #0f172a;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.control-button:hover {
+  background: #f1f5f9;
+}
+
+/* Passion screen - swipeable stack */
+.screen.passion-screen {
+  background: linear-gradient(180deg, #1e2c41 0%, #22334a 40%, #0f2336 100%);
+  color: #e2e8f0;
+}
+.passion-heading {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #e5edf8;
+  text-align: center;
+}
+.passion-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: #93a3b8;
+}
+.passion-screen .stack {
+  position: relative;
+  width: min(320px, 88%);
+  height: min(520px, calc(100% - 220px));
+  margin: 8px auto;
+}
+.stack-card {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  touch-action: none; /* allow dragging */
+}
+.stack-card--image .stack-card-full {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 20px;
+  display: block;
+}
+.stack-card--framed .stack-card-frame {
+  position: relative;
+  border-radius: 20px;
+  width: 100%;
+  height: 100%;
+  padding: 16px 14px 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+  background: center/cover no-repeat url('/asq/passion/Frame Base.png');
+}
+.stack-card--framed.is-selected .stack-card-frame {
+  border-color: #ffd29e;
+  box-shadow: 0 0 0 3px rgba(255, 210, 158, 0.35) inset;
+}
+.stack-card-corner.tl,
+.stack-card-corner.br {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  background: #2a3f5d;
+  opacity: 0.25;
+  border-radius: 16px;
+}
+.stack-card-corner.tl {
+  top: 10px;
+  left: 10px;
+  border-top-left-radius: 20px;
+}
+.stack-card-corner.br {
+  right: 10px;
+  bottom: 10px;
+  border-bottom-right-radius: 20px;
+}
+.stack-card-roman {
+  position: absolute;
+  font-weight: 800;
+  font-size: 12px;
+  color: #2b4363;
+  letter-spacing: 1px;
+}
+.stack-card-roman.tl {
+  top: 12px;
+  left: 16px;
+}
+.stack-card-roman.br {
+  right: 16px;
+  bottom: 12px;
+}
+.stack-card-img {
+  width: 100%;
+  height: 70%;
+  object-fit: contain;
+  margin-bottom: 10px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.stack-card-label {
+  font-family: 'Fredoka', 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: #244160;
+  margin-bottom: 4px;
+  text-align: center;
+  line-height: 1.1;
+}
+.stack-card-label-line {
+  display: block;
+}
+.swipe-hint {
+  position: absolute;
+  top: 16px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #e2e8f0;
+}
+.swipe-left {
+  left: 16px;
+}
+.swipe-right {
+  right: 16px;
+}
+.passion-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.passion-footer .btn {
+  background: #273b52;
+  color: #e6eefb;
+  border-color: #1e2c41;
+}
+.passion-footer .btn[disabled] {
+  background: #1f2d41;
+  color: #95a3b8;
+}
+.passion-reset {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: #c6d2e3;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: center;
+}
+.passion-instruction {
+  text-align: center;
+  font-size: 11px;
+  color: #9bb0cb;
+}
