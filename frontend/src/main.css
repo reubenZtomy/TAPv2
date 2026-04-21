@@ -1,24 +1,275 @@
+/* Adventure screen (swipe) */
+.screen.adventure-screen {
+  /* Match peach/orange theme from screenshot */
+  background: linear-gradient(180deg, #f0dcc4 0%, #e3a47d 100%);
+  color: #2a2a2a;
+}
+.adventure-title {
+  color: #b4552d; /* heading color per screenshot */
+  text-align: center;
+  font-weight: 800;
+}
+.adventure-stack {
+  position: relative;
+  width: min(320px, 88%);
+  height: 420px;
+  margin: 8px auto;
+}
+.adventure-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none; /* ensure horizontal swipe tracking works reliably */
+  -webkit-tap-highlight-color: transparent; /* prevent blue tap overlay */
+  background: transparent;
+  flex-direction: column;
+}
+.adventure-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent; /* prevent blue tap overlay */
+  filter: drop-shadow(0 8px 22px rgba(0,0,0,0.28));
+}
+.adventure-caption {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+.adventure-caption::before {
+  content: attr(data-label);
+}
+.adventure-caption {
+  color: #7a4a2f;
+  font-weight: 800;
+  font-size: 16px;
+  line-height: 1;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(255, 245, 235, 0.92);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+}
+.screen.adventure-screen,
+.adventure-stack,
+.adventure-card,
+.adventure-card-img,
+.adventure-title {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.adventure-footer .btn {
+  /* beige confirm like screenshot */
+  background: #d9b29a;
+  color: #7a4a2f;
+  border-color: transparent;
+}
+.adventure-footer .btn[disabled] { opacity: 0.6; }
+.adventure-instruction { text-align: center; font-size: 11px; color: #7a4a2f; margin-top: 6px; }
+/* Basecamp screen */
+.screen.basecamp-screen {
+  background: linear-gradient(180deg, #f0dcc4 0%, #e3a47d 100%);
+}
+.basecamp-title {
+  color: #7a4a2f;
+  text-align: center;
+  font-weight: 800;
+}
+.basecamp-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 180px;
+  margin: 8px 0;
+}
+.basecamp-hero img {
+  height: 100%;
+  object-fit: contain;
+}
+.basecamp-options {
+  display: grid;
+  gap: 12px;
+}
+.basecamp-option {
+  border: none;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-weight: 800;
+  color: #fff1e5;
+  background: #b4552d;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.12);
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, outline-color 160ms ease;
+}
+.basecamp-option:hover {
+  transform: translateY(-1px);
+}
+.basecamp-option.is-selected {
+  outline: 2px solid #ffd29e;
+  background: #d26a39;
+}
+.basecamp-option.is-selected,
+.basecamp-option[aria-pressed="true"] {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.22),
+    0 0 0 4px rgba(255, 210, 158, 0.65) inset;
+  background: #df7846;
+}
+.basecamp-footer .btn {
+  background: #d9b29a;
+  color: #7a4a2f;
+  border-color: transparent;
+}
+.basecamp-footer .btn[disabled] {
+  opacity: 0.6;
+}
+.basecamp-instruction {
+  text-align: center;
+  font-size: 11px;
+  color: #7a4a2f;
+  margin-top: 6px;
+}
+/* Treasure screen */
+.screen.treasure-screen { background: transparent; }
+.treasure-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 220px;
+  margin-top: 4px;
+}
+.treasure-hero { position: relative; filter: drop-shadow(0 8px 22px rgba(0,0,0,0.28)); }
+.treasure-hero--small { height: 120px; margin-top: 6px; margin-bottom: 10px; }
+@media (min-width: 900px) { .treasure-hero--small { height: 140px; } }
+.treasure-hero-variant {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 42%;
+  height: auto;
+  object-fit: contain;
+  animation: heroFade 180ms ease-out;
+}
+@keyframes heroFade {
+  from { opacity: 0; transform: translate(-50%, -56%) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, -52%) scale(1); }
+}
+.treasure-options {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+  width: 100%;
+  max-width: 340px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.treasure-option {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #f4ad7e;
+  color: #0f172a;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+}
+.treasure-option.is-selected {
+  outline: 2px solid #ffd29e;
+  background: #f7b992;
+}
+.treasure-screen .typo-title {
+  color: #ffffff;
+  text-align: center;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+.treasure-footer .btn {
+  background: #273b52;
+  color: #e6eefb;
+  border-color: #1e2c41;
+}
+.treasure-footer .btn[disabled] {
+  background: #1f2d41;
+  color: #95a3b8;
+}
+.treasure-instruction {
+  text-align: center;
+  font-size: 11px;
+  color: #9bb0cb;
+  margin-top: 6px;
+}
+html, body, #root {
+  height: 100svh;
+  min-height: 100vh; /* fallback */
+  overflow: hidden;  /* prevent page scroll; app scales to fit */
+}
 body {
   margin: 0;
   padding: 0;
-  background: #f6f8fb;
+  /* Rich, on-brand layered background */
+  background:
+    radial-gradient(1000px 700px at 0% -10%, rgba(37, 61, 92, 0.65), transparent 60%),
+    radial-gradient(900px 650px at 110% 0%, rgba(18, 93, 138, 0.50), transparent 55%),
+    radial-gradient(800px 600px at 25% 115%, rgba(18, 50, 74, 0.55), transparent 52%),
+    linear-gradient(180deg, #0d2234 0%, #0b1b2b 55%, #08131f 100%);
   color: #0f172a;
 }
 
+/* Decorative overlay: soft bokeh + subtle grid */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(140px 140px at 18% 28%, rgba(244, 173, 126, 0.10), transparent 70%),
+    radial-gradient(180px 180px at 82% 70%, rgba(84, 177, 255, 0.08), transparent 72%),
+    radial-gradient(220px 220px at 60% 8%, rgba(191, 219, 254, 0.08), transparent 75%),
+    radial-gradient(160px 160px at 8% 82%, rgba(255, 255, 255, 0.04), transparent 70%);
+  opacity: 0.35; /* softer, no stripes */
+  z-index: 0;
+}
+
+/* Decorative side images (desktop only) */
+@media (min-width: 900px) {
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    /* Two subtle illustrations placed at left/right */
+    background:
+      url('/asq/PARTNER_-_KOALA.png') no-repeat left 4% center / 300px auto,
+      url('/asq/PARTNER_-_KANGAROO.png') no-repeat right 4% center / 300px auto;
+    opacity: 0.06;
+    filter: saturate(0.9) brightness(1.05);
+    z-index: 0;
+  }
+}
 .app-root {
-  min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 24px;
+  gap: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
 .device-frame-outer {
   width: 100%;
-  height: calc(100svh - 48px);
+  height: 100svh;
+  min-height: 100vh; /* fallback */
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -30,7 +281,7 @@ body {
   box-shadow:
     0 2px 6px rgba(0, 0, 0, 0.06),
     0 12px 24px rgba(0, 0, 0, 0.12);
-  background: #000;
+  background: transparent;
   display: flex;
   position: relative;
 }
@@ -48,11 +299,19 @@ body {
 .device-content {
   position: relative;
   z-index: 1;
-  background: #ffffff;
+  background: transparent;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+/* Desktop presentation: remove phone chrome look */
+@media (min-width: 900px) {
+  .device-frame {
+    box-shadow: none;
+    border-radius: 0;
+  }
 }
 
 /* Typography (approximate Figma defaults; adjust as needed) */
@@ -123,7 +382,7 @@ body {
   height: 100%;
   padding: 20px 20px 24px;
   box-sizing: border-box;
-  background: #ffffff;
+  background: transparent; /* let global background show */
 }
 .screen.title-screen {
   /* Gradient approximating the Figma home */
@@ -132,9 +391,7 @@ body {
 }
 
 /* Auth screens */
-.screen.auth-screen {
-  background: linear-gradient(180deg, #1e2c41 0%, #22334a 40%, #0f2336 100%);
-}
+.screen.auth-screen { background: transparent; }
 .auth-content {
   justify-content: center;
   align-items: center;
@@ -306,59 +563,134 @@ body {
 }
 
 /* Fun & Studies */
-.fun-screen .card-grid {
+.screen.fun-screen { background: transparent; }
+.fun-title {
+  color: #fff;
+  text-align: center;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.fun-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 18px 14px;
+  justify-items: center;
 }
-.card {
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+.fun-card {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: grid;
+  justify-items: center;
+  cursor: pointer;
 }
-.card-img {
-  width: 100%;
+.fun-card-img {
+  width: 120px;
   height: 120px;
   object-fit: contain;
+  transition: transform 160ms ease, filter 160ms ease, box-shadow 160ms ease;
+}
+@media (min-width: 900px) {
+  .fun-card-img { width: 140px; height: 140px; }
+}
+.fun-card-label {
+  margin-top: 6px;
+  color: #f1e3d2;
+  font-weight: 800;
+  text-align: center;
+}
+.fun-card-line { display: block; }
+.fun-card:hover .fun-card-img {
+  transform: translateY(-2px);
+}
+.fun-card.is-selected .fun-card-img,
+.fun-card[aria-pressed="true"] .fun-card-img {
+  transform: translateY(-4px) scale(1.06);
+  filter: drop-shadow(0 10px 22px rgba(255, 210, 158, 0.45));
+  box-shadow:
+    0 0 0 4px rgba(255, 210, 158, 0.9),
+    0 10px 22px rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+}
+.fun-instruction {
+  text-align: center;
+  font-size: 11px;
+  color: #f1e3d2;
+  margin-top: 6px;
 }
 
 /* Partner screen */
-.partner-grid {
+.screen.partner-screen { background: transparent; }
+.partner-heading {
+  color: #e5edf8;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+}
+.partner-choices {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 8px;
-}
-.partner-card {
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   gap: 8px;
+  justify-content: center;
+}
+.partner-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
+  border: 1px solid #2b3d54;
+  background: #0f2336;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
-.partner-card.is-selected {
-  outline: 2px solid #0052cc;
+.partner-avatar.is-selected {
+  outline: 2px solid #ffd29e;
   outline-offset: 0;
-  border-color: #0052cc;
-  background: #eff6ff;
+  border-color: #ffd29e;
+  background: #16304a;
 }
-.partner-img {
-  width: 100%;
-  height: 120px;
+.partner-avatar img {
+  width: 36px;
+  height: 36px;
   object-fit: contain;
 }
-.partner-label {
-  font-weight: 600;
-  font-size: 14px;
+.partner-hero {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 260px;
+}
+.partner-hero img {
+  width: 75%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.partner-title {
+  font-family: 'Fredoka', 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: #ffffff;
+  text-align: center;
+}
+.partner-footer .btn {
+  background: #273b52;
+  color: #e6eefb;
+  border-color: #1e2c41;
+}
+.partner-footer .btn[disabled] {
+  background: #1f2d41;
+  color: #95a3b8;
+}
+.partner-instruction {
+  text-align: center;
+  font-size: 11px;
+  color: #9bb0cb;
+  margin-top: 6px;
 }
 .controls {
   display: flex;
@@ -383,10 +715,7 @@ body {
 }
 
 /* Passion screen - swipeable stack */
-.screen.passion-screen {
-  background: linear-gradient(180deg, #1e2c41 0%, #22334a 40%, #0f2336 100%);
-  color: #e2e8f0;
-}
+.screen.passion-screen { background: transparent; color: #e2e8f0; }
 .passion-heading {
   font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   font-weight: 700;

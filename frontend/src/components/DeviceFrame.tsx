@@ -13,7 +13,7 @@ export function DeviceFrame({ children, overlaySrc, overlayOpacity = 0 }: Device
 
   useEffect(() => {
     const recompute = () => {
-      const margin = 32 // total margin around device
+      const margin = 0 // full-bleed scaling; outer CSS handles spacing
       const availW = Math.max(320, window.innerWidth - margin)
       const availH = Math.max(480, window.innerHeight - margin)
       const s = Math.min(availW / baseWidth, availH / baseHeight, 1)

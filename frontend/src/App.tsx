@@ -4,10 +4,13 @@ import { TitleScreen } from './screens/TitleScreen'
 import { FunStudiesScreen } from './screens/FunStudiesScreen'
 import { PartnerScreen } from './screens/PartnerScreen'
 import { PassionScreen } from './screens/PassionScreen'
+import { TreasureScreen } from './screens/TreasureScreen'
+import { BasecampScreen } from './screens/BasecampScreen'
+import { AdventureScreen } from './screens/AdventureScreen'
 import { LoginScreen } from './screens/LoginScreen'
 import { RegisterScreen } from './screens/RegisterScreen'
 
-type ScreenId = 'login' | 'register' | 'title' | 'passion' | 'fun' | 'partner' | 'done'
+type ScreenId = 'login' | 'register' | 'title' | 'passion' | 'partner' | 'treasure' | 'fun' | 'basecamp' | 'adventure' | 'done'
 
 export default function App() {
   const [screen, setScreen] = useState<ScreenId>('login')
@@ -50,10 +53,16 @@ export default function App() {
         return '/asq/ASQ Title - Final Ver.png'
       case 'passion':
         return undefined
+      case 'treasure':
+        return '/asq/Treasure - Base.png'
       case 'fun':
         return '/asq/iPhone 13 Mini - Fun and Studies.png'
       case 'partner':
         return '/asq/iPhone 13 Mini - Partner.png'
+      case 'basecamp':
+        return undefined
+      case 'adventure':
+        return undefined
       default:
         return undefined
     }
@@ -82,13 +91,22 @@ export default function App() {
         )}
         {screen === 'title' && <TitleScreen onStart={() => setScreen('passion')} />}
         {screen === 'passion' && (
-          <PassionScreen onBack={() => setScreen('title')} onNext={() => setScreen('fun')} />
-        )}
-        {screen === 'fun' && (
-          <FunStudiesScreen onNext={() => setScreen('partner')} onBack={() => setScreen('title')} />
+          <PassionScreen onBack={() => setScreen('title')} onNext={() => setScreen('partner')} />
         )}
         {screen === 'partner' && (
-          <PartnerScreen onBack={() => setScreen('fun')} onFinish={() => setScreen('done')} />
+          <PartnerScreen onBack={() => setScreen('passion')} onFinish={() => setScreen('treasure')} />
+        )}
+        {screen === 'treasure' && (
+          <TreasureScreen onBack={() => setScreen('partner')} onConfirm={() => setScreen('fun')} />
+        )}
+        {screen === 'fun' && (
+          <FunStudiesScreen onNext={() => setScreen('basecamp')} onBack={() => setScreen('title')} />
+        )}
+        {screen === 'basecamp' && (
+          <BasecampScreen onBack={() => setScreen('fun')} onConfirm={() => setScreen('adventure')} />
+        )}
+        {screen === 'adventure' && (
+          <AdventureScreen onBack={() => setScreen('basecamp')} onConfirm={() => setScreen('done')} />
         )}
         {screen === 'done' && (
           <div className="screen done-screen">
