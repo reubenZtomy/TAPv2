@@ -25,7 +25,7 @@ const defaultPassions: PassionItem[] = [
   { key: 'design_creative', label: 'DESIGN &\nCREATIVE ARTS', img: '/asq/passion/Design & Creative Arts.png', isFullCard: true },
   { key: 'law', label: 'LAW', img: '/asq/passion/Law.png', isFullCard: true },
   { key: 'nursing', label: 'NURSING', img: '/asq/passion/Nursing.png', isFullCard: true },
-  { key: 'education', label: 'EDUCATION', img: '/asq/passion/Rectangle 72.png', isFullCard: true },
+  { key: 'education', label: 'EDUCATION', img: '/asq/passion/Education.png', isFullCard: true },
   { key: 'social_work', label: 'SOCIAL WORK', img: '/asq/passion/Social Work.png', isFullCard: true },
   { key: 'other', label: 'OTHER', img: '/asq/passion/Other.png', isFullCard: true },
 ]
