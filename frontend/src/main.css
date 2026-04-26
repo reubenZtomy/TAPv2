@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Dongle:wght@300;700&display=swap');
+
 /* Adventure screen (swipe) */
 .screen.adventure-screen {
   /* Match peach/orange theme from screenshot */
@@ -215,6 +217,10 @@ html, body, #root {
 body {
   margin: 0;
   padding: 0;
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  font-size: 24px;
+  line-height: 1.1;
   /* Rich, on-brand layered background */
   background:
     radial-gradient(1000px 700px at 0% -10%, rgba(37, 61, 92, 0.65), transparent 60%),
@@ -271,7 +277,7 @@ body::before {
   height: 100svh;
   min-height: 100vh; /* fallback */
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
 }
 .device-frame {
@@ -316,26 +322,26 @@ body::before {
 
 /* Typography (approximate Figma defaults; adjust as needed) */
 .typo-title {
-  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  font-weight: 800;
-  font-size: 28px;
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  font-size: 24px;
   line-height: 1.2;
   letter-spacing: -0.02em;
   margin: 0;
   color: #0f172a;
 }
 .typo-subtitle {
-  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  font-weight: 500;
-  font-size: 14px;
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  font-size: 24px;
   line-height: 1.4;
   margin: 6px 0 0 0;
   color: #334155;
 }
 .typo-body {
-  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  font-size: 14px;
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  font-size: 24px;
   line-height: 1.5;
   margin: 0;
   color: #0f172a;
@@ -343,14 +349,37 @@ body::before {
 
 /* Buttons */
 .btn {
-  font-family: inherit;
-  font-weight: 600;
-  font-size: 16px;
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 36px;
   line-height: 1;
   padding: 14px 16px;
   border-radius: 12px;
   border: 1px solid transparent;
   cursor: pointer;
+}
+
+button {
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1;
+}
+
+input,
+label,
+p,
+span,
+div,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  font-size: 24px;
 }
 .btn-full {
   width: 100%;
@@ -498,6 +527,9 @@ body::before {
 }
 .title-actions {
   margin-top: auto;
+  padding-bottom: 34px;
+  display: flex;
+  justify-content: center;
 }
 
 /* New: Title illustration uses the exported full screen but cropped to top */
@@ -522,14 +554,14 @@ body::before {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  margin-top: 6px;
+  gap: 2px;
+  margin-top: 2px;
 }
 .asq-title {
-  font-family: 'Fredoka', 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
-    sans-serif;
-  font-weight: 700;
-  font-size: 28px;
+  font-family: 'Bagel Fat One', 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+  font-weight: 400;
+  font-size: 26px;
   line-height: 1.1;
   letter-spacing: 1px;
   color: #ffffff;
@@ -538,23 +570,27 @@ body::before {
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 .asq-subtitle {
-  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  font-weight: 500;
-  font-size: 13px;
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  font-size: 24px;
+  line-height: 1.05;
   color: #d8e1ee;
   margin: 0;
   text-align: center;
 }
 .asq-cta {
-  width: 100%;
+  width: min(78%, 300px);
   border: none;
-  border-radius: 12px;
-  padding: 14px 16px;
+  border-radius: 10px;
+  padding: 10px 20px;
+  min-height: 52px;
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 36px;
+  line-height: 0.92;
   color: #ffffff;
-  background: #f4ad7e;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15), 0 8px 18px rgba(0, 0, 0, 0.18);
+  background: #eea15e;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
   cursor: pointer;
 }
 .asq-cta:active {
@@ -671,7 +707,7 @@ body::before {
   object-fit: contain;
 }
 .partner-title {
-  font-family: 'Fredoka', 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-weight: 700;
   font-size: 20px;
   color: #ffffff;
@@ -717,7 +753,7 @@ body::before {
 /* Passion screen - swipeable stack */
 .screen.passion-screen { background: transparent; color: #e2e8f0; }
 .passion-heading {
-  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-weight: 700;
   font-size: 14px;
   color: #e5edf8;
@@ -816,8 +852,7 @@ body::before {
   -webkit-user-drag: none;
 }
 .stack-card-label {
-  font-family: 'Fredoka', 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
-    sans-serif;
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-weight: 700;
   font-size: 18px;
   color: #244160;
