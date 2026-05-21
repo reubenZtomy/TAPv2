@@ -5,6 +5,12 @@ import { Title } from '../components/Typography'
 type PartnerScreenProps = {
   onBack: () => void
   onFinish: () => void
+  questionText?: string
+  optionLabels?: Record<string, string>
+  backText?: string
+  confirmText?: string
+  instructionText?: string
+  emptySelectionText?: string
 }
 
 const partners = [
@@ -14,18 +20,35 @@ const partners = [
   { key: 'crocodile', label: 'Crocodile Survivor', thumb: '/asq/PARTNER_-_CROCODILE.png', img: '/asq/PARTNER_-_CROCODILE.png' },
 ]
 
-export function PartnerScreen({ onBack, onFinish }: PartnerScreenProps) {
+export function PartnerScreen({
+  onBack,
+  onFinish,
+  questionText = 'Who’s your wild partner on this epic journey through Australia?',
+  optionLabels = {},
+  backText = 'Back',
+  confirmText = 'Confirm',
+  instructionText = 'Select Character then Confirm',
+  emptySelectionText = 'Pick a Character!',
+}: PartnerScreenProps) {
   const [selected, setSelected] = useState<string | null>(null)
-  const current = useMemo(() => partners.find((p) => p.key === selected) || null, [selected])
+  const localizedPartners = useMemo(
+    () =>
+      partners.map((partner) => ({
+        ...partner,
+        label: optionLabels[partner.key] ?? partner.label,
+      })),
+    [optionLabels]
+  )
+  const current = useMemo(() => localizedPartners.find((p) => p.key === selected) || null, [localizedPartners, selected])
   return (
     <div className="screen partner-screen">
       <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
-        &lt;&lt;Back
+        &lt;&lt;{backText}
       </button>
       <div className="screen-content">
-        <p className="partner-heading">Who’s your wild partner on this epic journey through Australia?</p>
+        <p className="partner-heading">{questionText}</p>
         <div className="partner-choices">
-          {partners.map((p) => (
+          {localizedPartners.map((p) => (
             <button
               key={p.key}
               className={['partner-avatar', selected === p.key ? 'is-selected' : ''].join(' ')}
@@ -40,13 +63,13 @@ export function PartnerScreen({ onBack, onFinish }: PartnerScreenProps) {
         <div className="partner-hero">
           {current ? <img src={current.img} alt="" draggable={false} /> : null}
         </div>
-        <div className="partner-title">{current ? current.label : 'Pick a Character!'}</div>
+        <div className="partner-title">{current ? current.label : emptySelectionText}</div>
       </div>
       <div className="screen-footer partner-footer">
         <Button onClick={onFinish} disabled={!selected} fullWidth aria-label="Confirm">
-          Confirm
+          {confirmText}
         </Button>
-        <div className="partner-instruction">Select Character then Confirm</div>
+        <div className="partner-instruction">{instructionText}</div>
       </div>
     </div>
   )

@@ -2,9 +2,23 @@ import React from 'react'
 
 type TitleScreenProps = {
   onStart: () => void
+  titleText?: string
+  subtitleText?: string
+  startButtonText?: string
+  languages?: string[]
+  selectedLanguage?: string
+  onLanguageChange?: (language: string) => void
 }
 
-export function TitleScreen({ onStart }: TitleScreenProps) {
+export function TitleScreen({
+  onStart,
+  titleText = 'AUSTRALIA STUDY\nQUIZ',
+  subtitleText = 'Where do you belong?',
+  startButtonText = 'Tap to Start',
+  languages = [],
+  selectedLanguage = '',
+  onLanguageChange,
+}: TitleScreenProps) {
   const arrangedTopCharacters = [
     { src: '/asq/IMG_1136.png', slot: 'slot-1' },
     { src: '/asq/IMG_1131.png', slot: 'slot-2' },
@@ -18,6 +32,25 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
 
   return (
     <div className="screen title-screen">
+      {languages.length > 1 ? (
+        <div className="title-language-selector">
+          <select
+            className="title-language-select"
+            aria-label="Select language"
+            value={selectedLanguage}
+            onChange={(e) => onLanguageChange?.(e.target.value)}
+          >
+            {languages.map((language) => (
+              <option key={language} value={language}>
+                {language}
+              </option>
+            ))}
+          </select>
+          <span className="title-language-chevron" aria-hidden="true">
+            ▾
+          </span>
+        </div>
+      ) : null}
       <div className="title-illustration">
         <img src="/asq/bg_waves.png" alt="" className="title-illustration-img" draggable={false} />
         <div className="title-characters-layer" aria-hidden="true">
@@ -27,12 +60,19 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
         </div>
       </div>
       <div className="title-content">
-        <h1 className="asq-title">AUSTRALIA STUDY<br />QUIZ</h1>
-        <p className="asq-subtitle">Where do you belong?</p>
+        <h1 className="asq-title">
+          {titleText.split('\n').map((line, idx) => (
+            <React.Fragment key={idx}>
+              {line}
+              {idx < titleText.split('\n').length - 1 ? <br /> : null}
+            </React.Fragment>
+          ))}
+        </h1>
+        <p className="asq-subtitle">{subtitleText}</p>
       </div>
       <div className="title-actions">
         <button className="asq-cta" onClick={onStart} aria-label="Tap to Start" data-testid="cta-start">
-          Tap to Start
+          {startButtonText}
         </button>
       </div>
     </div>

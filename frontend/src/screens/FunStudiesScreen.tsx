@@ -5,6 +5,11 @@ import { Title } from '../components/Typography'
 type FunStudiesScreenProps = {
   onNext: () => void
   onBack: () => void
+  questionText?: string
+  optionLabels?: Record<string, string>
+  backText?: string
+  confirmText?: string
+  instructionText?: string
 }
 
 const choices = [
@@ -14,17 +19,29 @@ const choices = [
   { key: 'party', label: 'Party\nExpert', img: '/asq/fun5/IMG_1086.png' },
 ]
 
-export function FunStudiesScreen({ onNext, onBack }: FunStudiesScreenProps) {
+export function FunStudiesScreen({
+  onNext,
+  onBack,
+  questionText = 'How will you judge fun and studies on your journey?',
+  optionLabels = {},
+  backText = 'Back',
+  confirmText = 'Confirm',
+  instructionText = 'Select Image then Confirm',
+}: FunStudiesScreenProps) {
   const [selected, setSelected] = useState<string | null>(null)
+  const localizedChoices = choices.map((choice) => ({
+    ...choice,
+    label: optionLabels[choice.key] ?? choice.label,
+  }))
   return (
     <div className="screen fun-screen">
       <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
-        &lt;&lt;Back
+        &lt;&lt;{backText}
       </button>
       <div className="screen-content">
-        <Title className="fun-title">How will you judge fun and studies on your journey?</Title>
+        <Title className="fun-title">{questionText}</Title>
         <div className="fun-grid">
-          {choices.map((c) => (
+          {localizedChoices.map((c) => (
             <button
               key={c.key}
               className={['fun-card', selected === c.key ? 'is-selected' : ''].join(' ')}
@@ -45,9 +62,9 @@ export function FunStudiesScreen({ onNext, onBack }: FunStudiesScreenProps) {
       </div>
       <div className="screen-footer">
         <Button onClick={() => selected && onNext()} disabled={!selected} fullWidth aria-label="Confirm">
-          Confirm
+          {confirmText}
         </Button>
-        <div className="fun-instruction">Select Image then Confirm</div>
+        <div className="fun-instruction">{instructionText}</div>
       </div>
     </div>
   )

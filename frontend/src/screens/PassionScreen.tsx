@@ -11,6 +11,13 @@ type PassionItem = {
 type PassionScreenProps = {
   onBack: () => void
   onNext: (selected: string | null) => void
+  questionText?: string
+  backText?: string
+  confirmText?: string
+  resetText?: string
+  swipeTextStart?: string
+  swipeTextEnd?: string
+  swipeTextMiddle?: string
 }
 
 // Cards per your list (icon placeholders used from local assets where available)
@@ -29,7 +36,17 @@ const defaultPassions: PassionItem[] = [
   { key: 'other', label: 'OTHER', img: '/asq/passion/Other.png', isFullCard: true },
 ]
 
-export function PassionScreen({ onBack, onNext }: PassionScreenProps) {
+export function PassionScreen({
+  onBack,
+  onNext,
+  questionText = 'Choose your path to your Aussie knowledge mastery!',
+  backText = 'Back',
+  confirmText = 'Confirm',
+  resetText = 'I changed my mind!',
+  swipeTextStart = 'Swipe to the right for more options',
+  swipeTextEnd = 'Swipe to the right',
+  swipeTextMiddle = 'Swipe left or right',
+}: PassionScreenProps) {
   const [selected, setSelected] = useState<string | null>(defaultPassions[0]?.key ?? null)
   const [currentIndex, setCurrentIndex] = useState(0)
   const carouselRef = useRef<HTMLDivElement | null>(null)
@@ -129,18 +146,18 @@ export function PassionScreen({ onBack, onNext }: PassionScreenProps) {
 
   const swipeInstruction =
     currentIndex === 0
-      ? 'Swipe to the right for more options'
+      ? swipeTextStart
       : currentIndex === defaultPassions.length - 1
-        ? 'Swipe to the right'
-        : 'Swipe left or right'
+        ? swipeTextEnd
+        : swipeTextMiddle
 
   return (
     <div className="screen passion-screen">
       <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
-        &lt;&lt;Back
+        &lt;&lt;{backText}
       </button>
       <div className="screen-content">
-        <div className="passion-heading">Choose your path to your Aussie knowledge mastery!</div>
+        <div className="passion-heading">{questionText}</div>
         <div
           className="stack-carousel"
           ref={carouselRef}
@@ -187,7 +204,7 @@ export function PassionScreen({ onBack, onNext }: PassionScreenProps) {
           fullWidth
           aria-label="Confirm"
         >
-          Confirm
+          {confirmText}
         </Button>
         <button
           className="passion-reset"
@@ -195,7 +212,7 @@ export function PassionScreen({ onBack, onNext }: PassionScreenProps) {
           onClick={() => setSelected(null)}
           aria-label="I changed my mind"
         >
-          I changed my mind!
+          {resetText}
         </button>
       </div>
     </div>

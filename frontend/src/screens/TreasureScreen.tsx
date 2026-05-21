@@ -5,6 +5,11 @@ import { Title } from '../components/Typography'
 type TreasureScreenProps = {
   onBack: () => void
   onConfirm: (budgetKey: string) => void
+  questionText?: string
+  optionLabels?: Record<string, string>
+  backText?: string
+  confirmText?: string
+  instructionText?: string
 }
 
 const options = [
@@ -22,8 +27,24 @@ type BagSlots = {
   bottom: BagType | null
 }
 
-export function TreasureScreen({ onBack, onConfirm }: TreasureScreenProps) {
+export function TreasureScreen({
+  onBack,
+  onConfirm,
+  questionText = 'What’s your treasure chest looking for this Aussie quest?',
+  optionLabels = {},
+  backText = 'Back',
+  confirmText = 'Confirm',
+  instructionText = 'Select Answer then Confirm',
+}: TreasureScreenProps) {
   const [selected, setSelected] = useState<string | null>(null)
+  const localizedOptions = useMemo(
+    () =>
+      options.map((option) => ({
+        ...option,
+        label: optionLabels[option.key] ?? option.label,
+      })),
+    [optionLabels]
+  )
 
   const bagSlots = useMemo<BagSlots | null>(() => {
     switch (selected) {
@@ -45,10 +66,10 @@ export function TreasureScreen({ onBack, onConfirm }: TreasureScreenProps) {
   return (
     <div className="screen treasure-screen">
       <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
-        &lt;&lt;Back
+        &lt;&lt;{backText}
       </button>
       <div className="screen-content">
-        <Title className="treasure-title">What’s your treasure chest looking for this Aussie quest?</Title>
+        <Title className="treasure-title">{questionText}</Title>
         <div className="treasure-hero treasure-hero--small" aria-hidden="true" key={selected ?? 'default'}>
           {!bagSlots ? (
             <img src="/asq/treasure4/Group 52.png" alt="" className="treasure-hero-default" draggable={false} />
@@ -70,7 +91,7 @@ export function TreasureScreen({ onBack, onConfirm }: TreasureScreenProps) {
           )}
         </div>
         <div className="treasure-options">
-          {options.map((opt) => (
+          {localizedOptions.map((opt) => (
             <button
               key={opt.key}
               className={['treasure-option', selected === opt.key ? 'is-selected' : ''].join(' ')}
@@ -89,9 +110,9 @@ export function TreasureScreen({ onBack, onConfirm }: TreasureScreenProps) {
           fullWidth
           aria-label="Confirm"
         >
-          Confirm
+          {confirmText}
         </Button>
-        <div className="treasure-instruction">Select Answer then Confirm</div>
+        <div className="treasure-instruction">{instructionText}</div>
       </div>
     </div>
   )

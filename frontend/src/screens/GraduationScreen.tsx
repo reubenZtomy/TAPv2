@@ -5,6 +5,11 @@ import { Title } from '../components/Typography'
 type GraduationScreenProps = {
   onBack: () => void
   onConfirm: (choice: string) => void
+  questionText?: string
+  optionLabels?: Record<string, string>
+  backText?: string
+  confirmText?: string
+  instructionText?: string
 }
 
 const options = [
@@ -14,18 +19,30 @@ const options = [
   { key: 'world_tour', label: 'Embark on a\nWorld Tour', img: '/asq/IMG_1117.png' },
 ]
 
-export function GraduationScreen({ onBack, onConfirm }: GraduationScreenProps) {
+export function GraduationScreen({
+  onBack,
+  onConfirm,
+  questionText = 'How will you level up after graduation?',
+  optionLabels = {},
+  backText = 'Back',
+  confirmText = 'Confirm',
+  instructionText = 'Select an option to confirm',
+}: GraduationScreenProps) {
   const [selected, setSelected] = useState<string | null>(null)
+  const localizedOptions = options.map((option) => ({
+    ...option,
+    label: optionLabels[option.key] ?? option.label,
+  }))
 
   return (
     <div className="screen basecamp-screen graduation-screen">
       <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
-        &lt;&lt;Back
+        &lt;&lt;{backText}
       </button>
       <div className="screen-content">
-        <Title className="basecamp-title">How will you level up after graduation?</Title>
+        <Title className="basecamp-title">{questionText}</Title>
         <div className="graduation-grid">
-          {options.map((opt) => (
+          {localizedOptions.map((opt) => (
             <button
               key={opt.key}
               className={['graduation-card', selected === opt.key ? 'is-selected' : ''].join(' ')}
@@ -46,9 +63,9 @@ export function GraduationScreen({ onBack, onConfirm }: GraduationScreenProps) {
       </div>
       <div className="screen-footer basecamp-footer">
         <Button onClick={() => selected && onConfirm(selected)} disabled={!selected} fullWidth aria-label="Confirm">
-          Confirm
+          {confirmText}
         </Button>
-        <div className="graduation-instruction">Select an option to confirm</div>
+        <div className="graduation-instruction">{instructionText}</div>
       </div>
     </div>
   )

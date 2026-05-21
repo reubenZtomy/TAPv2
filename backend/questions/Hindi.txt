@@ -1,0 +1,108 @@
+{
+  "title": {
+    "heading": "AUSTRALIA STUDY\nQUIZ",
+    "subtitle": "Where do you belong?",
+    "startButton": "Tap to Start"
+  },
+  "ui": {
+    "back": "Back",
+    "confirm": "Confirm",
+    "passionReset": "I changed my mind!",
+    "partnerEmptySelection": "Pick a Character!",
+    "partnerInstruction": "Select Character then Confirm",
+    "answerInstruction": "Select Answer then Confirm",
+    "imageInstruction": "Select Image then Confirm",
+    "graduationInstruction": "Select an option to confirm",
+    "passionSwipeStart": "Swipe to the right for more options",
+    "passionSwipeMiddle": "Swipe left or right",
+    "passionSwipeEnd": "Swipe to the right",
+    "adventureSwipeStart": "Swipe right for more options or press confirm",
+    "adventureSwipeMiddle": "Swipe left or right",
+    "adventureSwipeEnd": "Swipe left",
+    "resultsMain": "Gathering results...",
+    "resultsSubtitle": "I wonder where you will go?",
+    "resultsButton": "Click to find out!"
+  },
+  "questions": {
+    "passion": {
+      "question": "Choose your path to your Aussie knowledge mastery!",
+      "options": [
+        { "key": "business", "label": "BUSINESS" },
+        { "key": "engineering", "label": "ENGINEERING" },
+        { "key": "health_science", "label": "HEALTH SCIENCE" },
+        { "key": "art_humanities", "label": "ART &\nHUMANITIES" },
+        { "key": "environmental_studies", "label": "ENVIRONMENTAL\nSTUDIES" },
+        { "key": "it_cs", "label": "IT & COMPUTER\nSCIENCE" },
+        { "key": "design_creative", "label": "DESIGN &\nCREATIVE ARTS" },
+        { "key": "law", "label": "LAW" },
+        { "key": "nursing", "label": "NURSING" },
+        { "key": "education", "label": "EDUCATION" },
+        { "key": "social_work", "label": "SOCIAL WORK" },
+        { "key": "other", "label": "OTHER" }
+      ]
+    },
+    "partner": {
+      "question": "Who’s your wild partner on this epic journey through Australia?",
+      "options": [
+        { "key": "koala", "label": "Koala Chill" },
+        { "key": "kangaroo", "label": "Kangaroo Jumper" },
+        { "key": "wombat", "label": "Wombat Warrior" },
+        { "key": "crocodile", "label": "Crocodile Survivor" }
+      ]
+    },
+    "treasure": {
+      "question": "What’s your treasure chest looking for this Aussie quest?",
+      "options": [
+        { "key": "under_25k", "label": "Small Fortune - Under AUD 25k" },
+        { "key": "25_35k", "label": "Well Stocked - AUD 25k - 35k" },
+        { "key": "35_45k", "label": "Treasure Trove - AUD 35k - 45k" },
+        { "key": "over_45k", "label": "Endless Gold - Over AUD 45k" }
+      ]
+    },
+    "fun": {
+      "question": "How will you judge fun and studies on your journey?",
+      "options": [
+        { "key": "all_work", "label": "All Work,\nNo Play" },
+        { "key": "balanced", "label": "Balanced\nAdventurer" },
+        { "key": "relaxed", "label": "Relaxed\nScholar" },
+        { "key": "party", "label": "Party\nExpert" }
+      ]
+    },
+    "basecamp": {
+      "question": "Where will you set up your basecamp for learning?",
+      "options": [
+        { "key": "under_25k", "label": "Small Fortune - Under AUD 25k" },
+        { "key": "25_35k", "label": "Well Stocked - AUD 25k - 35k" },
+        { "key": "35_45k", "label": "Treasure Trove - AUD 35k - 45k" },
+        { "key": "over_45k", "label": "Endless Gold - Over AUD 45k" }
+      ]
+    },
+    "recharge": {
+      "question": "Do you need a top-tier university to claim victory of the quest?",
+      "options": [
+        { "key": "top_100", "label": "Top 100 or Bust!" },
+        { "key": "top_200", "label": "Top 200 works for me!" },
+        { "key": "program", "label": "It's all about the program" },
+        { "key": "ranking", "label": "Who cares about raking?" }
+      ]
+    },
+    "graduation": {
+      "question": "How will you level up after graduation?",
+      "options": [
+        { "key": "arena", "label": "Enter the\nArena" },
+        { "key": "knowledge", "label": "Power Up\nYour Knowledge" },
+        { "key": "path", "label": "Build Your\nOwn Path" },
+        { "key": "world_tour", "label": "Embark on a\nWorld Tour" }
+      ]
+    },
+    "adventure": {
+      "question": "How will you level up during your Aussie quest downtime?",
+      "options": [
+        { "key": "surf", "label": "Surf the Waves" },
+        { "key": "wildlife", "label": "Wildlife Watcher" },
+        { "key": "hike", "label": "Hike the Outback" },
+        { "key": "city", "label": "City Explorer" }
+      ]
+    }
+  }
+}

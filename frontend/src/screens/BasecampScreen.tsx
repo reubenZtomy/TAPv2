@@ -5,6 +5,11 @@ import { Title } from '../components/Typography'
 type BasecampScreenProps = {
   onBack: () => void
   onConfirm: (choice: string) => void
+  questionText?: string
+  optionLabels?: Record<string, string>
+  backText?: string
+  confirmText?: string
+  instructionText?: string
 }
 
 const options = [
@@ -14,8 +19,20 @@ const options = [
   { key: 'over_45k', label: 'Endless Gold - Over AUD 45k' },
 ]
 
-export function BasecampScreen({ onBack, onConfirm }: BasecampScreenProps) {
+export function BasecampScreen({
+  onBack,
+  onConfirm,
+  questionText = 'Where will you set up your basecamp for learning?',
+  optionLabels = {},
+  backText = 'Back',
+  confirmText = 'Confirm',
+  instructionText = 'Select Answer then Confirm',
+}: BasecampScreenProps) {
   const [selected, setSelected] = useState<string | null>(null)
+  const localizedOptions = options.map((option) => ({
+    ...option,
+    label: optionLabels[option.key] ?? option.label,
+  }))
   const heroSrc = useMemo(() => {
     switch (selected) {
       case 'under_25k':
@@ -34,15 +51,15 @@ export function BasecampScreen({ onBack, onConfirm }: BasecampScreenProps) {
   return (
     <div className="screen basecamp-screen">
       <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
-        &lt;&lt;Back
+        &lt;&lt;{backText}
       </button>
       <div className="screen-content">
-        <Title className="basecamp-title">Where will you set up your basecamp for learning?</Title>
+        <Title className="basecamp-title">{questionText}</Title>
         <div className="basecamp-hero" aria-hidden="true">
           <img src={heroSrc} alt="" draggable={false} />
         </div>
         <div className="basecamp-options">
-          {options.map((opt) => (
+          {localizedOptions.map((opt) => (
             <button
               key={opt.key}
               className={['basecamp-option', selected === opt.key ? 'is-selected' : ''].join(' ')}
@@ -61,9 +78,9 @@ export function BasecampScreen({ onBack, onConfirm }: BasecampScreenProps) {
           fullWidth
           aria-label="Confirm"
         >
-          Confirm
+          {confirmText}
         </Button>
-        <div className="basecamp-instruction">Select Answer then Confirm</div>
+        <div className="basecamp-instruction">{instructionText}</div>
       </div>
     </div>
   )

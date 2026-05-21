@@ -5,6 +5,12 @@ import { Title } from '../components/Typography'
 type AdventureScreenProps = {
   onBack: () => void
   onConfirm: (choice: string | null) => void
+  questionText?: string
+  backText?: string
+  confirmText?: string
+  swipeTextStart?: string
+  swipeTextEnd?: string
+  swipeTextMiddle?: string
 }
 
 type Card = { key: string; label: string; img: string }
@@ -16,7 +22,16 @@ const cards: Card[] = [
   { key: 'city', label: 'City Explorer', img: '/asq/adventure8/City Explorer.png' },
 ]
 
-export function AdventureScreen({ onBack, onConfirm }: AdventureScreenProps) {
+export function AdventureScreen({
+  onBack,
+  onConfirm,
+  questionText = 'How will you level up during your Aussie quest downtime?',
+  backText = 'Back',
+  confirmText = 'Confirm',
+  swipeTextStart = 'Swipe right for more options or press confirm',
+  swipeTextEnd = 'Swipe left',
+  swipeTextMiddle = 'Swipe left or right',
+}: AdventureScreenProps) {
   const [selected, setSelected] = useState<string | null>(cards[0]?.key ?? null)
   const [currentIndex, setCurrentIndex] = useState(0)
   const carouselRef = useRef<HTMLDivElement | null>(null)
@@ -112,18 +127,18 @@ export function AdventureScreen({ onBack, onConfirm }: AdventureScreenProps) {
 
   const swipeInstruction =
     currentIndex === 0
-      ? 'Swipe right for more options or press confirm'
+      ? swipeTextStart
       : currentIndex === cards.length - 1
-        ? 'Swipe left'
-        : 'Swipe left or right'
+        ? swipeTextEnd
+        : swipeTextMiddle
 
   return (
     <div className="screen adventure-screen">
       <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
-        &lt;&lt;Back
+        &lt;&lt;{backText}
       </button>
       <div className="screen-content">
-        <Title className="adventure-title">How will you level up during your Aussie quest downtime?</Title>
+        <Title className="adventure-title">{questionText}</Title>
         <div
           className="adventure-carousel"
           ref={carouselRef}
@@ -147,7 +162,7 @@ export function AdventureScreen({ onBack, onConfirm }: AdventureScreenProps) {
       </div>
       <div className="screen-footer adventure-footer">
         <Button onClick={() => onConfirm(selected)} disabled={!selected} fullWidth aria-label="Confirm">
-          Confirm
+          {confirmText}
         </Button>
         <div className="adventure-instruction" aria-live="polite">{swipeInstruction}</div>
       </div>

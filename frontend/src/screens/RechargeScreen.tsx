@@ -5,6 +5,11 @@ import { Title } from '../components/Typography'
 type RechargeScreenProps = {
   onBack: () => void
   onConfirm: (choice: string) => void
+  questionText?: string
+  optionLabels?: Record<string, string>
+  backText?: string
+  confirmText?: string
+  instructionText?: string
 }
 
 const options = [
@@ -14,21 +19,33 @@ const options = [
   { key: 'ranking', label: 'Who cares about raking?' },
 ]
 
-export function RechargeScreen({ onBack, onConfirm }: RechargeScreenProps) {
+export function RechargeScreen({
+  onBack,
+  onConfirm,
+  questionText = 'Do you need a top-tier university to claim victory of the quest?',
+  optionLabels = {},
+  backText = 'Back',
+  confirmText = 'Confirm',
+  instructionText = 'Select Answer then Confirm',
+}: RechargeScreenProps) {
   const [selected, setSelected] = useState<string | null>(null)
+  const localizedOptions = options.map((option) => ({
+    ...option,
+    label: optionLabels[option.key] ?? option.label,
+  }))
 
   return (
     <div className="screen basecamp-screen recharge-screen">
       <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
-        &lt;&lt;Back
+        &lt;&lt;{backText}
       </button>
       <div className="screen-content">
-        <Title className="basecamp-title">Do you need a top-tier university to claim victory of the quest?</Title>
+        <Title className="basecamp-title">{questionText}</Title>
         <div className="recharge-hero" aria-hidden="true">
           <img src="/asq/Group 53.png" alt="" draggable={false} />
         </div>
         <div className="basecamp-options">
-          {options.map((opt) => (
+          {localizedOptions.map((opt) => (
             <button
               key={opt.key}
               className={['basecamp-option', selected === opt.key ? 'is-selected' : ''].join(' ')}
@@ -47,9 +64,9 @@ export function RechargeScreen({ onBack, onConfirm }: RechargeScreenProps) {
           fullWidth
           aria-label="Confirm"
         >
-          Confirm
+          {confirmText}
         </Button>
-        <div className="basecamp-instruction">Select Answer then Confirm</div>
+        <div className="basecamp-instruction">{instructionText}</div>
       </div>
     </div>
   )

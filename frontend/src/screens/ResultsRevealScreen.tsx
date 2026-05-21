@@ -3,9 +3,17 @@ import { Button } from '../components/Button'
 
 type ResultsRevealScreenProps = {
   onContinue: () => void
+  mainText?: string
+  subtitleText?: string
+  buttonText?: string
 }
 
-export function ResultsRevealScreen({ onContinue }: ResultsRevealScreenProps) {
+export function ResultsRevealScreen({
+  onContinue,
+  mainText = 'Gathering results...',
+  subtitleText = 'I wonder where you will go?',
+  buttonText = 'Click to find out!',
+}: ResultsRevealScreenProps) {
   const [showSubtitle, setShowSubtitle] = useState(false)
   const [showButton, setShowButton] = useState(false)
 
@@ -21,13 +29,13 @@ export function ResultsRevealScreen({ onContinue }: ResultsRevealScreenProps) {
   return (
     <div className="screen results-screen">
       <div className="screen-content results-content">
-        <div className="results-main">Gathering results...</div>
-        {showSubtitle && <div className="results-sub">I wonder where you will go?</div>}
+        <div className="results-main">{mainText}</div>
+        {showSubtitle && <div className="results-sub">{subtitleText}</div>}
       </div>
       <div className="screen-footer results-footer">
         {showButton && (
           <Button onClick={onContinue} fullWidth aria-label="Click to find out">
-            Click to find out!
+            {buttonText}
           </Button>
         )}
       </div>
