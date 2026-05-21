@@ -53,6 +53,35 @@ source .venv/bin/activate
 python backend/app.py
 ```
 
+## Personality result & university recommendations
+
+The app generates a personality result and matching Australian university recommendations using the Groq AI API. This is handled by `backend/result_engine.py` and exposed via the `/api/generate-result` endpoint (POST).
+
+How it works:
+1. The frontend sends the user's quiz answers (including their `passion` / field of study) as JSON.
+2. The backend matches the answers to one of 8 personality profiles (e.g. City Visionary, Mindful Learner).
+3. It then recommends the top 3 Australian universities that fit the personality and chosen field of study.
+
+Setup requirements:
+- Add a `GROQ_API_KEY` to `backend/.env`. Optionally set `GROQ_MODEL` (defaults to `llama-3.3-70b-versatile`).
+- The university data file `backend/australian_universities_2026.xlsx` must be present in the `backend/` folder. The engine reads the "University Data 2026" sheet on startup.
+- Requires `pandas` and `openpyxl` (included in `requirements.txt`) to read the Excel file.
+
+Example request body:
+
+```json
+{
+  "passion": "Engineering",
+  "partner": "Kangaroo Jumper",
+  "treasure": "Endless Gold",
+  "funBalance": "All Work, No Play",
+  "basecamp": "Big and Creative City Life",
+  "downtime": "City Explorer",
+  "rankingView": "Top 100 or bust!",
+  "afterGraduation": "Power Up Your Knowledge"
+}
+```
+
 ## How to add a new language
 
 Language content is loaded from `.txt` files in `backend/questions/`. Each file must contain valid JSON, and the file name is used as the language name shown in the app.
