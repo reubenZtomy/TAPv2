@@ -1,5 +1,13 @@
 This is the project for Student personality assesment application
 
+## Repository (V2)
+
+This codebase is published as **TAP V2** at [https://github.com/reubenZtomy/TAPv2](https://github.com/reubenZtomy/TAPv2.git). It is separate from the original client repository ([TAP](https://github.com/reubenZtomy/TAP)). Push V2 changes to the `tapv2` remote only:
+
+```bash
+git push tapv2 main
+```
+
 ## Project scaffold
 
 This workspace now contains a minimal Flask backend and a Vite + React + TypeScript frontend scaffold.
