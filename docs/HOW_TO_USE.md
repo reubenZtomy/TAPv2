@@ -1,4 +1,4 @@
-<img width="1914" height="930" alt="image" src="https://github.com/user-attachments/assets/c0d75363-6598-4747-827d-c54282b62e72" /># TAP V2 — How to use the admin quiz builder
+# TAP V2 — How to use the admin quiz builder
 
 This guide walks through creating a quiz, designing question screens, mapping answers to results, and publishing a public link for students.
 
