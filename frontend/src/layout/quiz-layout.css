@@ -1,0 +1,269 @@
+/* Runtime quiz layout canvas (matches admin mobile preview) */
+.quiz-layout-screen {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--survey-screen-bg);
+  box-sizing: border-box;
+}
+
+.quiz-layout-canvas {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.quiz-layout-canvas-base {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  min-height: 100%;
+  pointer-events: none;
+}
+
+.ql-screen-bg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.ql-screen-bg--fill {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.ql-screen-bg-image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.ql-screen-bg-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+.quiz-layout-screen-bg.ql-screen-bg {
+  min-height: 100%;
+}
+
+.admin-device-screen-bg.ql-screen-bg {
+  width: 100%;
+  height: 100%;
+}
+
+.quiz-layout-canvas-base .screen {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+.quiz-layout-canvas-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.ql-element {
+  position: absolute;
+  pointer-events: auto;
+  border: none;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.ql-element--interactive {
+  cursor: pointer;
+}
+
+.ql-element--interactive:active {
+  filter: brightness(0.95);
+}
+
+.ql-el-inner {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  line-height: inherit;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.ql-el-text {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  text-align: inherit;
+  overflow: hidden;
+}
+
+.ql-el-button {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  text-align: inherit;
+}
+
+.ql-el-textbox {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font: inherit;
+  text-align: inherit;
+}
+
+.ql-el-placeholder {
+  opacity: 0.65;
+}
+
+.ql-element--image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.ql-element--carousel {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.ql-el-carousel {
+  display: flex;
+  gap: 8px;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 8px;
+  box-sizing: border-box;
+  align-items: stretch;
+  flex: 1;
+  align-self: stretch;
+}
+
+.ql-carousel-slide {
+  flex: 0 0 var(--carousel-slide-pct, 88%);
+  max-width: var(--carousel-slide-pct, 88%);
+  height: 100%;
+  min-height: 0;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  font-size: 14px;
+  color: #fff;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.ql-carousel-slide.has-both .ql-carousel-slide-media {
+  flex: 1;
+  min-height: 0;
+}
+
+.ql-carousel-slide-media {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.ql-carousel-slide-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ql-carousel-slide-text {
+  flex-shrink: 0;
+  padding: 6px 8px 8px;
+  text-align: center;
+  line-height: 1.15;
+}
+
+.ql-carousel-slide-title {
+  font-family: 'Bagel Fat One', cursive;
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+
+.ql-carousel-slide-body {
+  font-family: 'Dongle', sans-serif;
+  font-size: 16px;
+  opacity: 0.95;
+}
+
+.ql-carousel-slide-fallback {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  padding: 8px;
+}
+
+.ql-el-shape {
+  width: 100%;
+  height: 100%;
+}
+
+.ql-el-divider {
+  width: 100%;
+  height: 100%;
+  background: inherit;
+}
+
+.ql-el-icon {
+  text-align: inherit;
+}
+
+.ql-el-fallback {
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+.quiz-layout-question-base {
+  width: 100%;
+  height: 100%;
+  background: var(--survey-screen-bg);
+  color: #fff;
+  padding: 48px 20px 20px;
+  box-sizing: border-box;
+}
+
+.quiz-layout-question-base h2 {
+  font-family: 'Bagel Fat One', cursive;
+  font-size: 26px;
+  margin: 0 0 12px;
+}

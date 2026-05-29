@@ -3,60 +3,98 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from result_engine import ResultEngine
-import sqlite3
-import jwt
 import datetime
 import os
 import json
 
-load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+from database import get_connection, init_db, row_to_dict
+from auth_utils import create_token, verify_token, get_bearer_token, get_user_by_id
+from routes.admin_quizzes import admin_quizzes_bp
+from routes.admin_preferences import admin_preferences_bp
+from routes.admin_dashboard import admin_dashboard_bp
+from routes.admin_builder import admin_builder_bp
+from routes.admin_links import admin_links_bp
+from routes.public_quiz import public_quiz_bp
+from routes.quiz_fonts import quiz_fonts_bp
 
-# Static folder points to frontend build directory (../frontend/dist)
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+
 static_dir = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
 
 app = Flask(__name__, static_folder=static_dir)
 CORS(app)
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_secret_key_change_me')
-db_path = os.path.join(os.path.dirname(__file__), 'auth.db')
 questions_dir = os.path.join(os.path.dirname(__file__), 'questions')
+app.config['QUESTIONS_DIR'] = questions_dir
 
 result_engine = ResultEngine()
 
-
-def init_db():
-    conn = sqlite3.connect(db_path)
-    c = conn.cursor()
-    c.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT UNIQUE NOT NULL,
-            name TEXT NOT NULL,
-            password_hash TEXT NOT NULL,
-            created_at TEXT NOT NULL
-        )
-        """
-    )
-    conn.commit()
-    conn.close()
+app.register_blueprint(admin_quizzes_bp)
+app.register_blueprint(admin_preferences_bp)
+app.register_blueprint(admin_dashboard_bp)
+app.register_blueprint(admin_builder_bp)
+app.register_blueprint(admin_links_bp)
+app.register_blueprint(public_quiz_bp)
+app.register_blueprint(quiz_fonts_bp)
 
 
-def create_token(user_id, email):
-    payload = {
-        'sub': user_id,
-        'email': email,
-        'iat': datetime.datetime.utcnow(),
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7),
+def _user_public(row) -> dict:
+    return {
+        'id': row['id'],
+        'email': row['email'],
+        'name': row['name'],
+        'role': row.get('role') or 'student',
     }
-    return jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
 
-def verify_token(token):
-    try:
-        return jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-    except Exception:
-        return None
+def _dev_auto_login_enabled() -> bool:
+    """Dev-only: use ADMIN_EMAIL / ADMIN_PASSWORD from backend/.env."""
+    flag = (os.environ.get('DEV_AUTO_LOGIN') or '').strip().lower()
+    if flag in ('0', 'false', 'no', 'off'):
+        return False
+    if flag in ('1', 'true', 'yes', 'on'):
+        return True
+    return bool(app.debug)
+
+
+def _maybe_seed_admin():
+    email = (os.environ.get('ADMIN_EMAIL') or '').strip().lower()
+    password = os.environ.get('ADMIN_PASSWORD') or ''
+    name = (os.environ.get('ADMIN_NAME') or 'TAP Admin').strip()
+    if not email or not password:
+        return
+    password_hash = generate_password_hash(password)
+    with get_connection() as conn:
+        row = conn.execute(
+            'SELECT id, role, password_hash FROM users WHERE email = ?',
+            (email,),
+        ).fetchone()
+        if row:
+            updates = []
+            params = []
+            if row['role'] != 'admin':
+                updates.append("role = 'admin'")
+            if not check_password_hash(row['password_hash'], password):
+                updates.append('password_hash = ?')
+                params.append(password_hash)
+            if updates:
+                params.append(row['id'])
+                conn.execute(
+                    f"UPDATE users SET {', '.join(updates)} WHERE id = ?",
+                    params,
+                )
+            return
+        conn.execute(
+            'INSERT INTO users (email, name, password_hash, created_at, role) VALUES (?, ?, ?, ?, ?)',
+            (
+                email,
+                name,
+                generate_password_hash(password),
+                datetime.datetime.utcnow().isoformat(),
+                'admin',
+            ),
+        )
 
 
 def parse_language_file(path):
@@ -106,34 +144,30 @@ def register():
     if not email or not name or not password:
         return jsonify({'error': 'Missing required fields'}), 400
 
-    conn = sqlite3.connect(db_path)
-    c = conn.cursor()
-
     try:
-        c.execute(
-            'INSERT INTO users (email, name, password_hash, created_at) VALUES (?, ?, ?, ?)',
-            (email, name, generate_password_hash(password), datetime.datetime.utcnow().isoformat()),
-        )
-        conn.commit()
-    except sqlite3.IntegrityError:
-        conn.close()
-        return jsonify({'error': 'Email already registered'}), 409
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO users (email, name, password_hash, created_at, role)
+                VALUES (?, ?, ?, ?, 'student')
+                """,
+                (
+                    email,
+                    name,
+                    generate_password_hash(password),
+                    datetime.datetime.utcnow().isoformat(),
+                ),
+            )
+            row = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
+    except Exception as exc:
+        if 'UNIQUE' in str(exc):
+            return jsonify({'error': 'Email already registered'}), 409
+        raise
 
-    c.execute('SELECT id FROM users WHERE email = ?', (email,))
-    row = c.fetchone()
-    conn.close()
+    user = row_to_dict(row)
+    token = create_token(user['id'], email, user['role'])
 
-    user_id = row[0]
-    token = create_token(user_id, email)
-
-    return jsonify({
-        'token': token,
-        'user': {
-            'id': user_id,
-            'email': email,
-            'name': name
-        }
-    }), 201
+    return jsonify({'token': token, 'user': _user_public(user)}), 201
 
 
 @app.route('/api/auth/login', methods=['POST'])
@@ -146,44 +180,62 @@ def login():
     if not email or not password:
         return jsonify({'error': 'Missing credentials'}), 400
 
-    conn = sqlite3.connect(db_path)
-    c = conn.cursor()
-    c.execute('SELECT id, name, password_hash FROM users WHERE email = ?', (email,))
-    row = c.fetchone()
-    conn.close()
+    with get_connection() as conn:
+        row = conn.execute(
+            'SELECT * FROM users WHERE email = ?',
+            (email,),
+        ).fetchone()
 
-    if not row or not check_password_hash(row[2], password):
+    if not row or not check_password_hash(row['password_hash'], password):
         return jsonify({'error': 'Invalid email or password'}), 401
 
-    user_id, name = row[0], row[1]
-    token = create_token(user_id, email)
+    user = row_to_dict(row)
+    token = create_token(user['id'], email, user.get('role') or 'student')
 
-    return jsonify({
-        'token': token,
-        'user': {
-            'id': user_id,
-            'email': email,
-            'name': name
-        }
-    })
+    return jsonify({'token': token, 'user': _user_public(user)})
+
+
+@app.route('/api/dev/auto-admin-login', methods=['POST'])
+def dev_auto_admin_login():
+    """Development only — signs in admin from ADMIN_EMAIL / ADMIN_PASSWORD in .env."""
+    if not _dev_auto_login_enabled():
+        return jsonify({'error': 'Dev auto-login is disabled'}), 404
+
+    email = (os.environ.get('ADMIN_EMAIL') or '').strip().lower()
+    password = os.environ.get('ADMIN_PASSWORD') or ''
+    if not email or not password:
+        return jsonify({
+            'error': 'Set ADMIN_EMAIL and ADMIN_PASSWORD in backend/.env for dev auto-login',
+        }), 503
+
+    _maybe_seed_admin()
+
+    with get_connection() as conn:
+        row = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
+
+    if not row or not check_password_hash(row['password_hash'], password):
+        return jsonify({'error': 'Invalid admin credentials in .env'}), 401
+
+    if (row['role'] or 'student') != 'admin':
+        return jsonify({'error': 'ADMIN_EMAIL user is not an admin'}), 403
+
+    user = row_to_dict(row)
+    token = create_token(user['id'], email, user['role'])
+    return jsonify({'token': token, 'user': _user_public(user), 'auto_login': True})
 
 
 @app.route('/api/auth/me', methods=['GET'])
 def me():
-    auth = request.headers.get('Authorization', '')
-    parts = auth.split()
-
-    if len(parts) == 2 and parts[0].lower() == 'bearer':
-        payload = verify_token(parts[1])
-        if payload:
-            return jsonify({
-                'user': {
-                    'id': payload['sub'],
-                    'email': payload['email']
-                }
-            })
-
-    return jsonify({'error': 'Unauthorized'}), 401
+    token = get_bearer_token()
+    if not token:
+        return jsonify({'error': 'Unauthorized'}), 401
+    payload = verify_token(token)
+    if not payload:
+        return jsonify({'error': 'Unauthorized'}), 401
+    user = get_user_by_id(int(payload['sub']))
+    if not user:
+        return jsonify({'error': 'Unauthorized'}), 401
+    return jsonify({'user': _user_public(user)})
 
 
 @app.route('/api/questions/languages', methods=['GET'])
@@ -222,7 +274,6 @@ def generate_result():
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    # Serve built frontend files if present
     static_folder = app.static_folder
 
     if path != '' and os.path.exists(os.path.join(static_folder, path)):
@@ -240,4 +291,5 @@ def serve(path):
 
 if __name__ == '__main__':
     init_db()
+    _maybe_seed_admin()
     app.run(host='127.0.0.1', port=5000, debug=True)

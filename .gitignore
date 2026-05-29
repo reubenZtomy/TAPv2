@@ -13,3 +13,6 @@ ENV/
 
 .env
 backend/.env
+backend/uploads/
+.setup-backend.log
+.setup-frontend.log

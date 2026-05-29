@@ -1,5 +1,18 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { DeviceFrame } from './components/DeviceFrame'
+import { DynamicQuestionScreen } from './screens/DynamicQuestionScreen'
+import type { PublicQuizPayload } from './PublicQuizRoute'
+import {
+  getLayoutElements,
+  isIntroConfigured,
+  isForwardNavigationAction,
+  actionRecordsAnswer,
+  resolveActionNavigation,
+  type ElementAction,
+  type LayoutElement,
+  type PreviewTarget,
+} from './admin/layoutTypes'
+import { QuizLayoutScreen } from './layout/QuizLayoutScreen'
 import { TitleScreen } from './screens/TitleScreen'
 import { FunStudiesScreen } from './screens/FunStudiesScreen'
 import { PartnerScreen } from './screens/PartnerScreen'
@@ -18,7 +31,18 @@ import { LoginScreen } from './screens/LoginScreen'
 import { RegisterScreen } from './screens/RegisterScreen'
 import { QuizContent } from './types/quizContent'
 import { buildGenerateResultPayload, QuizAnswerKeys } from './utils/quizAnswers'
+import {
+  firstQuestionScreen,
+  getOptionLabels as flowOptionLabels,
+  getQuestionText as flowQuestionText,
+  nextQuestionKey,
+  prevQuestionKey,
+  screenForQuestionKey,
+  TAP_QUESTION_ORDER,
+} from './utils/quizFlow'
 import { QuizResult } from './types/quizResult'
+import { loadCustomResults, resolveLayoutAnswerKey, type CustomResultRule } from './admin/customResults'
+import { isLayoutAnswerChoice } from './admin/layoutTypes'
 
 type ScreenId =
   | 'login'
@@ -32,12 +56,51 @@ type ScreenId =
   | 'adventure'
   | 'recharge'
   | 'graduation'
+  | 'layout'
+  | 'dynamic'
   | 'results'
+  | 'customResult'
+  | 'noResult'
   | 'personalityResult'
   | 'done'
 
-export default function App() {
-  const [screen, setScreen] = useState<ScreenId>('login')
+type AppProps = {
+  publicQuiz?: PublicQuizPayload
+}
+
+export default function App({ publicQuiz }: AppProps = {}) {
+  const normalizeKey = (value: string | undefined): string => (value || '').trim().toLowerCase()
+
+  const conditionMatches = (answers: QuizAnswerKeys, questionKey: string, expected: string | undefined): boolean => {
+    const raw = (answers as Record<string, string | undefined>)[questionKey]
+    return normalizeKey(raw) === normalizeKey(expected)
+  }
+
+  const questionOrder = useMemo(
+    () =>
+      publicQuiz?.question_order?.length
+        ? publicQuiz.question_order
+        : [...TAP_QUESTION_ORDER],
+    [publicQuiz]
+  )
+
+  const questionsLayout = useMemo(() => publicQuiz?.questions_layout ?? [], [publicQuiz])
+  const layoutQuestionIds = useMemo(() => questionsLayout.map((q) => q.id), [questionsLayout])
+  const introLayoutElements = useMemo(
+    () => getLayoutElements(publicQuiz?.intro_layout?.elements),
+    [publicQuiz?.intro_layout]
+  )
+  const useLayoutRenderer = Boolean(publicQuiz && questionsLayout.length > 0)
+  const useIntroLayoutOverlay = introLayoutElements.length > 0
+  const introConfigured = useMemo(
+    () => isIntroConfigured(publicQuiz?.intro_layout),
+    [publicQuiz?.intro_layout]
+  )
+  const customFont = publicQuiz?.custom_font ?? null
+
+  const [screen, setScreen] = useState<ScreenId>(publicQuiz ? 'title' : 'login')
+  const [layoutTarget, setLayoutTarget] = useState<PreviewTarget>('intro')
+  const [dynamicQuestionKey, setDynamicQuestionKey] = useState('')
   const [overlay, setOverlay] = useState(false)
   const [overlayOpacity, setOverlayOpacity] = useState(0.45)
   const [token, setToken] = useState<string | null>(null)
@@ -47,6 +110,10 @@ export default function App() {
   const [quizAnswers, setQuizAnswers] = useState<QuizAnswerKeys>({})
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null)
   const [quizResultLoaded, setQuizResultLoaded] = useState(false)
+  const [customResultRule, setCustomResultRule] = useState<CustomResultRule | null>(null)
+  const [hasCustomRules, setHasCustomRules] = useState(false)
+  const [layoutPendingAnswers, setLayoutPendingAnswers] = useState<Record<string, string>>({})
+  const [layoutSelectionError, setLayoutSelectionError] = useState('')
   const [showResultPreviewDev, setShowResultPreviewDev] = useState(() => isResultPreviewDevRoute())
   const languageStorageKey = 'asq_language'
 
@@ -86,16 +153,46 @@ export default function App() {
     }
   }
 
+  useEffect(() => {
+    if (!publicQuiz) return
+    setLanguages(publicQuiz.languages || [])
+    const lang = publicQuiz.default_language || publicQuiz.languages?.[0] || 'English'
+    setSelectedLanguage(lang)
+    setQuizContent(publicQuiz.content || null)
+
+    const firstKey = publicQuiz.question_order?.[0]
+    if (!introConfigured && firstKey && useLayoutRenderer) {
+      const row = questionsLayout.find((q) => q.question_key === firstKey)
+      if (row && getLayoutElements(row.layout).length > 0) {
+        setLayoutTarget(row.id)
+        setScreen('layout')
+        return
+      }
+      setDynamicQuestionKey(firstKey)
+      setScreen('dynamic')
+      return
+    }
+
+    setScreen(introConfigured ? 'title' : firstKey ? 'dynamic' : 'title')
+    if (!introConfigured && firstKey) setDynamicQuestionKey(firstKey)
+  }, [publicQuiz, introConfigured, useLayoutRenderer, questionsLayout])
+
+  useEffect(() => {
+    if (!publicQuiz?.contents || !selectedLanguage) return
+    setQuizContent(publicQuiz.contents[selectedLanguage] || publicQuiz.content || null)
+  }, [publicQuiz, selectedLanguage])
+
   // Enable overlay via ?overlay=1 in URL
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     setOverlay(params.get('overlay') === '1')
+    if (publicQuiz) return
     const saved = localStorage.getItem('asq_token')
     if (saved) {
       setToken(saved)
       setScreen('title')
     }
-  }, [languageStorageKey])
+  }, [languageStorageKey, publicQuiz])
 
   useEffect(() => {
     const syncDevPreviewRoute = () => setShowResultPreviewDev(isResultPreviewDevRoute())
@@ -122,6 +219,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (publicQuiz) return
     let cancelled = false
     const loadLanguages = async () => {
       try {
@@ -156,8 +254,8 @@ export default function App() {
   }, [selectedLanguage])
 
   useEffect(() => {
-    if (!selectedLanguage) {
-      setQuizContent(null)
+    if (publicQuiz || !selectedLanguage) {
+      if (!publicQuiz) setQuizContent(null)
       return
     }
     let cancelled = false
@@ -205,15 +303,225 @@ export default function App() {
   }, [overlay, screen])
 
   const getQuestionText = (key: string, fallback: string) =>
-    quizContent?.questions?.[key]?.question || fallback
+    flowQuestionText(quizContent, key, fallback)
 
-  const getOptionLabels = (key: string) =>
-    Object.fromEntries(
-      (quizContent?.questions?.[key]?.options || []).map((option) => [option.key, option.label])
-    )
+  const getOptionLabels = (key: string) => flowOptionLabels(quizContent, key)
 
   const getUiText = (key: keyof NonNullable<QuizContent['ui']>, fallback: string) =>
     quizContent?.ui?.[key] || fallback
+
+  const goToLayoutQuestion = useCallback(
+    (key: string) => {
+      const row = questionsLayout.find((q) => q.question_key === key)
+      if (row && getLayoutElements(row.layout).length > 0) {
+        setLayoutTarget(row.id)
+        setScreen('layout')
+        return
+      }
+      if (useLayoutRenderer) {
+        setDynamicQuestionKey(key)
+        setScreen('dynamic')
+        return
+      }
+      const nextScreen = screenForQuestionKey(key)
+      if (nextScreen === 'dynamic') setDynamicQuestionKey(key)
+      setScreen(nextScreen as ScreenId)
+    },
+    [questionsLayout, useLayoutRenderer]
+  )
+
+  const goToQuestionKey = useCallback(
+    (key: string) => {
+      if (useLayoutRenderer) {
+        goToLayoutQuestion(key)
+        return
+      }
+      const nextScreen = screenForQuestionKey(key)
+      if (nextScreen === 'dynamic') setDynamicQuestionKey(key)
+      setScreen(nextScreen as ScreenId)
+    },
+    [useLayoutRenderer, goToLayoutQuestion]
+  )
+
+  const finishQuiz = useCallback(
+    async (answers: QuizAnswerKeys) => {
+      setQuizAnswers(answers)
+      setQuizResult(null)
+      setQuizResultLoaded(false)
+      setCustomResultRule(null)
+      const quizId = publicQuiz?.quiz?.id
+      if (quizId) {
+        const customRules = loadCustomResults(quizId)
+        const hasRules = customRules.length > 0
+        setHasCustomRules(hasRules)
+        if (hasRules) {
+          const matched = [...customRules]
+            .sort((a, b) => b.conditions.length - a.conditions.length)
+            .find((rule) =>
+              rule.conditions.every((cond) => conditionMatches(answers, cond.questionKey, cond.optionKey))
+            )
+          setCustomResultRule(matched || null)
+          setScreen(matched ? 'customResult' : 'noResult')
+          setQuizResultLoaded(true)
+          return
+        }
+      } else {
+        setHasCustomRules(false)
+      }
+      setScreen('results')
+      const data = await submitQuizToApi(answers)
+      setQuizResult(data)
+      setQuizResultLoaded(true)
+    },
+    [publicQuiz, quizContent]
+  )
+
+  const navigateNext = useCallback(
+    async (currentKey: string, choice: string) => {
+      const nextAnswers = { ...quizAnswers, [currentKey]: choice } as QuizAnswerKeys
+      setQuizAnswers(nextAnswers)
+      const nextKey = nextQuestionKey(questionOrder, currentKey)
+      if (!nextKey) {
+        await finishQuiz(nextAnswers)
+        return
+      }
+      goToQuestionKey(nextKey)
+    },
+    [quizAnswers, questionOrder, goToQuestionKey, finishQuiz]
+  )
+
+  const navigateBack = useCallback(
+    (currentKey: string) => {
+      const prevKey = prevQuestionKey(questionOrder, currentKey)
+      if (!prevKey) {
+        setLayoutTarget('intro')
+        setScreen('title')
+        return
+      }
+      goToQuestionKey(prevKey)
+    },
+    [questionOrder, goToQuestionKey]
+  )
+
+  const handleLayoutElementAction = useCallback(
+    (action: ElementAction, element?: LayoutElement) => {
+      const resolveElementOptionKey = (el?: LayoutElement): string =>
+        el ? resolveLayoutAnswerKey(el) : ''
+
+      const elementOptionKey = resolveElementOptionKey(element)
+      const recordedChoice = actionRecordsAnswer(action) || elementOptionKey
+      const applyRecordedAnswer = (questionKey: string) => {
+        if (!recordedChoice) return
+        setQuizAnswers((prev) => ({ ...prev, [questionKey]: recordedChoice }) as QuizAnswerKeys)
+      }
+
+      if (action.type === 'next' && layoutTarget === 'intro') {
+        setQuizAnswers({})
+        setQuizResult(null)
+        setQuizResultLoaded(false)
+        const firstKey = questionOrder[0]
+        if (firstKey) goToLayoutQuestion(firstKey)
+        return
+      }
+      if (action.type === 'next' && typeof layoutTarget === 'number') {
+        const key = questionsLayout.find((q) => q.id === layoutTarget)?.question_key
+        if (key) {
+          if (element && isLayoutAnswerChoice(element)) {
+            if (recordedChoice) {
+              setLayoutPendingAnswers((prev) => ({ ...prev, [key]: recordedChoice }))
+              setLayoutSelectionError('')
+            }
+            return
+          }
+          const selected = recordedChoice || layoutPendingAnswers[key] || ''
+          if (!selected) {
+            setLayoutSelectionError('Please select an option before pressing Next.')
+            return
+          }
+          setLayoutSelectionError('')
+          void navigateNext(key, selected)
+        }
+        return
+      }
+      if (typeof layoutTarget === 'number' && element && isLayoutAnswerChoice(element)) {
+        const key = questionsLayout.find((q) => q.id === layoutTarget)?.question_key
+        if (key && recordedChoice) {
+          setLayoutPendingAnswers((prev) => ({ ...prev, [key]: recordedChoice }))
+          setLayoutSelectionError('')
+        }
+      }
+      if ((action.type === 'back' || action.type === 'previous') && typeof layoutTarget === 'number') {
+        const key = questionsLayout.find((q) => q.id === layoutTarget)?.question_key
+        if (key) {
+          applyRecordedAnswer(key)
+          navigateBack(key)
+        }
+        return
+      }
+      const next = resolveActionNavigation(action, layoutTarget, layoutQuestionIds)
+      if (next === 'intro') {
+        if (typeof layoutTarget === 'number') {
+          const key = questionsLayout.find((q) => q.id === layoutTarget)?.question_key
+          if (key) applyRecordedAnswer(key)
+        }
+        setLayoutTarget('intro')
+        setScreen('title')
+        return
+      }
+      if (typeof next === 'number') {
+        if (element && isLayoutAnswerChoice(element) && isForwardNavigationAction(action)) {
+          return
+        }
+        const row = questionsLayout.find((q) => q.id === next)
+        if (row) {
+          if (typeof layoutTarget === 'number') {
+            const fromKey = questionsLayout.find((q) => q.id === layoutTarget)?.question_key
+            if (fromKey) applyRecordedAnswer(fromKey)
+          }
+          goToLayoutQuestion(row.question_key)
+        }
+        return
+      }
+      if (
+        next === null &&
+        typeof layoutTarget === 'number' &&
+        isForwardNavigationAction(action)
+      ) {
+        if (element && isLayoutAnswerChoice(element)) return
+        const idx = layoutQuestionIds.indexOf(layoutTarget)
+        if (idx >= 0 && idx === layoutQuestionIds.length - 1) {
+          const key = questionsLayout.find((q) => q.id === layoutTarget)?.question_key
+          if (key) {
+            const selected = recordedChoice || layoutPendingAnswers[key] || ''
+            if (!selected) {
+              setLayoutSelectionError('Please select an option before pressing Next.')
+              return
+            }
+            setLayoutSelectionError('')
+            void navigateNext(key, selected)
+          }
+        }
+      }
+    },
+    [
+      layoutTarget,
+      layoutQuestionIds,
+      layoutPendingAnswers,
+      questionsLayout,
+      questionOrder,
+      goToLayoutQuestion,
+      navigateNext,
+      navigateBack,
+    ]
+  )
+
+  const activeLayoutQuestion = useMemo(
+    () =>
+      typeof layoutTarget === 'number'
+        ? questionsLayout.find((q) => q.id === layoutTarget) ?? null
+        : null,
+    [layoutTarget, questionsLayout]
+  )
 
   const openTestPersonalityResult = (personalityId: PersonalityId) => {
     setQuizResult(createMockQuizResult(personalityId))
@@ -244,14 +552,62 @@ export default function App() {
             onGoLogin={() => setScreen('login')}
           />
         )}
-        {screen === 'title' && (
+        {screen === 'title' && useLayoutRenderer && (
+          useIntroLayoutOverlay ? (
+            <QuizLayoutScreen
+              elements={introLayoutElements}
+              customFont={customFont}
+              base={
+                <TitleScreen
+                  onStart={() => {
+                    setQuizAnswers({})
+                    setQuizResult(null)
+                    setQuizResultLoaded(false)
+                    const first = questionOrder[0]
+                    if (first) goToLayoutQuestion(first)
+                  }}
+                  titleText={quizContent?.title?.heading}
+                  subtitleText={quizContent?.title?.subtitle}
+                  startButtonText={quizContent?.title?.startButton}
+                  languages={languages}
+                  selectedLanguage={selectedLanguage}
+                  onLanguageChange={setSelectedLanguage}
+                />
+              }
+              onElementAction={handleLayoutElementAction}
+            />
+          ) : (
+            <TitleScreen
+              onStart={() => {
+                setQuizAnswers({})
+                setQuizResult(null)
+                setQuizResultLoaded(false)
+                setLayoutPendingAnswers({})
+                setLayoutSelectionError('')
+                const first = questionOrder[0]
+                if (first) goToLayoutQuestion(first)
+              }}
+              titleText={quizContent?.title?.heading}
+              subtitleText={quizContent?.title?.subtitle}
+              startButtonText={quizContent?.title?.startButton}
+              languages={languages}
+              selectedLanguage={selectedLanguage}
+              onLanguageChange={setSelectedLanguage}
+            />
+          )
+        )}
+        {screen === 'title' && !useLayoutRenderer && (
           <TitleScreen
             onStart={() => {
               setQuizAnswers({})
               setQuizResult(null)
               setQuizResultLoaded(false)
+              setLayoutPendingAnswers({})
+              setLayoutSelectionError('')
               console.log('[Quiz] Started — answers reset')
-              setScreen('passion')
+              const first = questionOrder[0]
+              if (first) goToQuestionKey(first)
+              else setScreen(firstQuestionScreen(questionOrder) as ScreenId)
             }}
             titleText={quizContent?.title?.heading}
             subtitleText={quizContent?.title?.subtitle}
@@ -261,12 +617,37 @@ export default function App() {
             onLanguageChange={setSelectedLanguage}
           />
         )}
-        {screen === 'passion' && (
+        {screen === 'layout' && activeLayoutQuestion && getLayoutElements(activeLayoutQuestion.layout).length > 0 && (
+          <QuizLayoutScreen
+            elements={activeLayoutQuestion.layout}
+            customFont={customFont}
+            base={
+              <div className="quiz-layout-question-base">
+                <h2>{getQuestionText(activeLayoutQuestion.question_key, activeLayoutQuestion.question_key)}</h2>
+                {layoutSelectionError ? (
+                  <p className="quiz-layout-selection-error">{layoutSelectionError}</p>
+                ) : null}
+              </div>
+            }
+            onElementAction={handleLayoutElementAction}
+          />
+        )}
+        {screen === 'layout' && activeLayoutQuestion && getLayoutElements(activeLayoutQuestion.layout).length === 0 && (
+          <DynamicQuestionScreen
+            questionKey={activeLayoutQuestion.question_key}
+            questionText={getQuestionText(activeLayoutQuestion.question_key, activeLayoutQuestion.question_key)}
+            optionLabels={getOptionLabels(activeLayoutQuestion.question_key)}
+            onBack={() => navigateBack(activeLayoutQuestion.question_key)}
+            onConfirm={(choice) => void navigateNext(activeLayoutQuestion.question_key, choice)}
+            backText={getUiText('back', 'Back')}
+            confirmText={getUiText('confirm', 'Confirm')}
+          />
+        )}
+        {!useLayoutRenderer && screen === 'passion' && (
           <PassionScreen
             onBack={() => setScreen('title')}
             onNext={(choice) => {
-              if (choice) setQuizAnswer('passion', choice)
-              setScreen('partner')
+              if (choice) void navigateNext('passion', choice)
             }}
             questionText={getQuestionText('passion', 'Choose your path to your Aussie knowledge mastery!')}
             backText={getUiText('back', 'Back')}
@@ -277,12 +658,11 @@ export default function App() {
             swipeTextEnd={getUiText('passionSwipeEnd', 'Swipe to the right')}
           />
         )}
-        {screen === 'partner' && (
+        {!useLayoutRenderer && screen === 'partner' && (
           <PartnerScreen
-            onBack={() => setScreen('passion')}
+            onBack={() => navigateBack('partner')}
             onFinish={(choice) => {
-              setQuizAnswer('partner', choice)
-              setScreen('treasure')
+              void navigateNext('partner', choice)
             }}
             questionText={getQuestionText(
               'partner',
@@ -295,12 +675,11 @@ export default function App() {
             emptySelectionText={getUiText('partnerEmptySelection', 'Pick a Character!')}
           />
         )}
-        {screen === 'treasure' && (
+        {!useLayoutRenderer && screen === 'treasure' && (
           <TreasureScreen
-            onBack={() => setScreen('partner')}
+            onBack={() => navigateBack('treasure')}
             onConfirm={(choice) => {
-              setQuizAnswer('treasure', choice)
-              setScreen('fun')
+              void navigateNext('treasure', choice)
             }}
             questionText={getQuestionText('treasure', 'What’s your treasure chest looking for this Aussie quest?')}
             optionLabels={getOptionLabels('treasure')}
@@ -309,11 +688,10 @@ export default function App() {
             instructionText={getUiText('answerInstruction', 'Select Answer then Confirm')}
           />
         )}
-        {screen === 'fun' && (
+        {!useLayoutRenderer && screen === 'fun' && (
           <FunStudiesScreen
             onNext={(choice) => {
-              setQuizAnswer('fun', choice)
-              setScreen('basecamp')
+              void navigateNext('fun', choice)
             }}
             onBack={() => setScreen('title')}
             questionText={getQuestionText('fun', 'How will you judge fun and studies on your journey?')}
@@ -323,12 +701,11 @@ export default function App() {
             instructionText={getUiText('imageInstruction', 'Select Image then Confirm')}
           />
         )}
-        {screen === 'basecamp' && (
+        {!useLayoutRenderer && screen === 'basecamp' && (
           <BasecampScreen
-            onBack={() => setScreen('fun')}
+            onBack={() => navigateBack('basecamp')}
             onConfirm={(choice) => {
-              setQuizAnswer('basecamp', choice)
-              setScreen('adventure')
+              void navigateNext('basecamp', choice)
             }}
             questionText={getQuestionText('basecamp', 'Where will you set up your basecamp for learning?')}
             optionLabels={getOptionLabels('basecamp')}
@@ -337,12 +714,11 @@ export default function App() {
             instructionText={getUiText('answerInstruction', 'Select Answer then Confirm')}
           />
         )}
-        {screen === 'adventure' && (
+        {!useLayoutRenderer && screen === 'adventure' && (
           <AdventureScreen
-            onBack={() => setScreen('basecamp')}
+            onBack={() => navigateBack('adventure')}
             onConfirm={(choice) => {
-              if (choice) setQuizAnswer('adventure', choice)
-              setScreen('recharge')
+              if (choice) void navigateNext('adventure', choice)
             }}
             questionText={getQuestionText('adventure', 'How will you level up during your Aussie quest downtime?')}
             backText={getUiText('back', 'Back')}
@@ -352,12 +728,11 @@ export default function App() {
             swipeTextEnd={getUiText('adventureSwipeEnd', 'Swipe left')}
           />
         )}
-        {screen === 'recharge' && (
+        {!useLayoutRenderer && screen === 'recharge' && (
           <RechargeScreen
-            onBack={() => setScreen('adventure')}
+            onBack={() => navigateBack('recharge')}
             onConfirm={(choice) => {
-              setQuizAnswer('recharge', choice)
-              setScreen('graduation')
+              void navigateNext('recharge', choice)
             }}
             questionText={getQuestionText(
               'recharge',
@@ -369,19 +744,22 @@ export default function App() {
             instructionText={getUiText('answerInstruction', 'Select Answer then Confirm')}
           />
         )}
-        {screen === 'graduation' && (
+        {screen === 'dynamic' && dynamicQuestionKey && (
+          <DynamicQuestionScreen
+            questionKey={dynamicQuestionKey}
+            questionText={getQuestionText(dynamicQuestionKey, dynamicQuestionKey)}
+            optionLabels={getOptionLabels(dynamicQuestionKey)}
+            onBack={() => navigateBack(dynamicQuestionKey)}
+            onConfirm={(choice) => void navigateNext(dynamicQuestionKey, choice)}
+            backText={getUiText('back', 'Back')}
+            confirmText={getUiText('confirm', 'Confirm')}
+          />
+        )}
+        {!useLayoutRenderer && screen === 'graduation' && (
           <GraduationScreen
-            onBack={() => setScreen('recharge')}
+            onBack={() => navigateBack('graduation')}
             onConfirm={async (choice) => {
-              const finalAnswers: QuizAnswerKeys = { ...quizAnswers, graduation: choice }
-              setQuizAnswers(finalAnswers)
-              console.log('[Quiz] Answer selected:', { question: 'graduation', optionKey: choice })
-              setQuizResult(null)
-              setQuizResultLoaded(false)
-              setScreen('results')
-              const data = await submitQuizToApi(finalAnswers)
-              setQuizResult(data)
-              setQuizResultLoaded(true)
+              await finishQuiz({ ...quizAnswers, graduation: choice })
             }}
             questionText={getQuestionText('graduation', 'How will you level up after graduation?')}
             optionLabels={getOptionLabels('graduation')}
@@ -392,12 +770,41 @@ export default function App() {
         )}
         {screen === 'results' && (
           <ResultsRevealScreen
-            onContinue={() => setScreen('personalityResult')}
+            onContinue={() => {
+              if (hasCustomRules) {
+                setScreen(customResultRule ? 'customResult' : 'noResult')
+                return
+              }
+              setScreen('personalityResult')
+            }}
             ready={quizResultLoaded}
             mainText={getUiText('resultsMain', 'Gathering results...')}
             subtitleText={getUiText('resultsSubtitle', 'I wonder where you will go?')}
             buttonText={getUiText('resultsButton', 'Click to find out!')}
           />
+        )}
+        {screen === 'customResult' && customResultRule && (
+          <QuizLayoutScreen
+            elements={customResultRule.layout}
+            customFont={customFont}
+            base={
+              getLayoutElements(customResultRule.layout).length === 0 ? (
+                <div className="custom-result-fallback">
+                  <h2>{customResultRule.resultTitle || 'Result'}</h2>
+                  <p>{customResultRule.resultDescription || ''}</p>
+                </div>
+              ) : undefined
+            }
+          />
+        )}
+        {screen === 'noResult' && (
+          <div className="screen no-result-screen">
+            <div className="screen-content no-result-content">
+              <div className="no-result-frame">
+                <p>No Result available</p>
+              </div>
+            </div>
+          </div>
         )}
         {screen === 'personalityResult' && (
           <PersonalityResultScreen
@@ -418,7 +825,8 @@ export default function App() {
               setQuizAnswers({})
               setQuizResult(null)
               setQuizResultLoaded(false)
-              setScreen('passion')
+              const first = questionOrder[0]
+              if (first) goToQuestionKey(first)
             }}
           />
         )}

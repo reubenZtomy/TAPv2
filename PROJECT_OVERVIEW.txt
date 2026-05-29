@@ -1,0 +1,360 @@
+================================================================================
+TAP V2 — PROJECT OVERVIEW (GenAI / onboarding context)
+================================================================================
+
+Product name:     TAP (The Aussie Personality) — Student Personality Assessment
+Repository:       https://github.com/reubenZtomy/TAPv2
+Version:          V2 (separate from legacy client repo: reubenZtomy/TAP)
+Purpose:          Interactive mobile-style quiz that classifies international
+                  students into one of eight “Australian study adventure”
+                  personality types, then uses AI to generate personalized copy
+                  and recommend three Australian universities matched to their
+                  answers and field of study.
+
+================================================================================
+1. TECHNOLOGY STACK
+================================================================================
+
+BACKEND
+  - Python 3.11+
+  - Flask 3.x — REST API + optional static host for production build
+  - flask-cors — CORS for development
+  - PyJWT — JSON Web Tokens for authenticated sessions
+  - python-dotenv — loads backend/.env (SECRET_KEY, GROQ_API_KEY, GROQ_MODEL)
+  - SQLite (auth.db) — user registration/login persistence
+  - requests — HTTP client to Groq OpenAI-compatible API
+  - pandas + openpyxl — reads university dataset from Excel at startup
+
+FRONTEND
+  - React 18
+  - TypeScript 5
+  - Vite 5 — dev server, HMR, production bundling
+  - @vitejs/plugin-react
+  - Plain CSS (main.css) — no Tailwind/CSS-in-JS framework
+  - Custom fonts: Bagel Fat One (headings), Dongle (body/buttons)
+  - No React Router — screen state managed in App.tsx (useState ScreenId)
+
+AI / LLM
+  - Groq API (OpenAI-compatible chat completions endpoint)
+  - Default model: llama-3.3-70b-versatile (configurable via GROQ_MODEL)
+  - Two sequential LLM calls per quiz completion (personality, then universities)
+
+ASSETS & DATA
+  - Static images under frontend/public/asq/ (hero, partner, lucky charm, UI)
+  - Per-personality folders: frontend/public/asq/results - {personality name}/
+  - Quiz copy: backend/questions/{Language}.txt (JSON inside .txt files)
+  - University KB: backend/australian_universities_2026.xlsx (sheet: University Data 2026)
+
+DEVOPS / TOOLING
+  - Git — main branch on TAPv2 remote
+  - Vite dev proxy: /api → http://127.0.0.1:5000
+  - concurrently (optional) — run Flask + Vite in one terminal
+
+================================================================================
+2. HIGH-LEVEL ARCHITECTURE
+================================================================================
+
+                    ┌─────────────────────────────────────┐
+                    │         Browser (user)              │
+                    │  React SPA in DeviceFrame (mobile)  │
+                    └──────────────┬──────────────────────┘
+                                   │
+              Dev: localhost:5173  │  Prod: Flask :5000 serves frontend/dist
+              Vite proxies /api    │
+                                   ▼
+                    ┌─────────────────────────────────────┐
+                    │           Flask (app.py)            │
+                    │  ┌─────────────┐ ┌───────────────┐  │
+                    │  │ Auth (JWT)  │ │ Questions API │  │
+                    │  │ SQLite      │ │ *.txt JSON    │  │
+                    │  └─────────────┘ └───────────────┘  │
+                    │  ┌─────────────────────────────────┐│
+                    │  │ ResultEngine (result_engine.py) ││
+                    │  │  • result_kb (8 profiles)       ││
+                    │  │  • universities (Excel)         ││
+                    │  │  • Groq LLM (2-step pipeline)   ││
+                    │  └─────────────────────────────────┘│
+                    └──────────────┬──────────────────────┘
+                                   │
+                                   ▼
+                    ┌─────────────────────────────────────┐
+                    │   Groq API (chat/completions)       │
+                    │   llama-3.3-70b-versatile           │
+                    └─────────────────────────────────────┘
+
+DATA FLOW (quiz completion)
+  1. User answers 8 question screens; keys stored in React state (quizAnswers).
+  2. On graduation confirm, frontend builds GenerateResultRequest via
+     buildGenerateResultPayload() — maps internal option keys to human labels.
+  3. POST /api/generate-result with JSON body.
+  4. ResultEngine Step 1: LLM compares answers to result_kb → personality JSON.
+  5. ResultEngine Step 2: LLM filters Excel universities by personality match
+     and user preferences → top 3 recommendations JSON.
+  6. Combined response stored in App state (quizResult).
+  7. ResultsRevealScreen waits for API; user taps through to PersonalityResultScreen.
+  8. mapApiResultToView() merges API text with theme assets (images, traits).
+  9. PersonalityResultLayout renders scrollable result cards.
+
+================================================================================
+3. CORE FEATURES
+================================================================================
+
+AUTHENTICATION
+  - Register: POST /api/auth/register (email, name, password)
+  - Login: POST /api/auth/login → JWT (7-day expiry)
+  - Me: GET /api/auth/me (Bearer token)
+  - Token stored in localStorage (asq_token); auto-advance to title if present
+  - Passwords hashed with werkzeug (generate_password_hash / check_password_hash)
+
+MULTI-LANGUAGE QUIZ CONTENT
+  - Languages discovered from backend/questions/*.txt filenames
+  - GET /api/questions/languages → list of language names
+  - GET /api/questions/{language} → full QuizContent JSON
+  - Supported in repo: English.txt, Chinese.txt (extensible by adding files)
+  - User selection persisted in localStorage (key: asq_language)
+  - Option keys in JSON are stable; only labels/questions are translated
+
+QUIZ FLOW (8 questions + results)
+  Screens in order:
+    login → register (optional) → title (language + start)
+    → passion (field of study, swipe carousel)
+    → partner (character choice)
+    → treasure (budget)
+    → fun (study/life balance image cards)
+    → basecamp (environment preference)
+    → adventure (downtime activity, swipe)
+    → recharge (university ranking priority)
+    → graduation (post-study plan)
+    → results (loading / “Click to find out!”)
+    → personalityResult (full result page)
+
+  Internal answer keys: passion, partner, treasure, fun, basecamp,
+  adventure, recharge, graduation
+
+EIGHT PERSONALITY RESULT TYPES
+  1. city_visionary       — City Visionary
+  2. adventurous_scholar  — Adventurous Scholar
+  3. dynamic_explorer     — Dynamic Explorer
+  4. creative_innovator   — Creative Innovator
+  5. focused_scholar      — Focused Scholar
+  6. balanced_adventurer  — Balanced Adventurer
+  7. nature_loving_learner — Nature-Loving Learner
+  8. mindful_learner      — Mindful Learner
+
+  Each has:
+    - Matching rules in backend result_kb (partner, treasure, funBalance,
+      basecamp, downtime, rankingView, afterGraduation arrays)
+    - Frontend theme in personalityThemes.ts (traits, colors, image paths)
+    - Asset folder under public/asq/results - {name}/
+
+PERSONALITY RESULT PAGE (UI)
+  - Shared layout: PersonalityResultLayout.tsx
+  - Phone frame wrapper: DeviceFrame.tsx
+  - Sections: intro, hero image, three traits, title/description card,
+    personality card, lucky charm (image + text), base camp, partner,
+    three “potential subjects” university cards, Share / Back / Retry actions
+  - Background: unified peach-to-orange gradient (CSS variable)
+  - Card backgrounds: random colors from defined pools per card type;
+    adjacent cards cannot share the same color
+  - Typography: Bagel Fat One 24px headings; Dongle Bold 20px body, 24px buttons
+  - Web Share API for share action (fallback: console log)
+
+AI-GENERATED DYNAMIC FIELDS (from API)
+  - title, description (title card)
+  - personality (personality card label text)
+  - reason (lucky charm explanation)
+  - partner, basecamp (with university city override for base camp)
+  - university_recommendations[] — rank, name, city, courses, fees, why, etc.
+  - subjects on UI derived from top_courses + passion label fallbacks
+
+STATIC / THEME FIELDS (frontend)
+  - Hero, lucky charm, partner images per personality
+  - Trait labels and colors
+  - defaultDescription / defaultLuckyCharm when API omits fields
+
+INTERNAL QA / PREVIEW (hidden)
+  - Secret URL path only (not linked in UI):
+    /asq-internal-preview-8f3c2a9e1b7d4m6p2q0w5x
+  - Shows PersonalityResultDevNav sidebar with buttons for all 8 types
+  - Uses createMockQuizResult() — no Groq call
+  - Config: frontend/src/config/devPreviewRoute.ts
+
+DESIGN / DEV EXTRAS
+  - Optional Figma alignment overlay: ?overlay=1 in URL; toggle with “o” key
+  - Overlay opacity +/- keyboard shortcuts
+  - Dev screen jump buttons when overlay enabled
+
+================================================================================
+4. AI SYSTEM (DETAILED)
+================================================================================
+
+Provider:     Groq — https://api.groq.com/openai/v1/chat/completions
+Auth:         GROQ_API_KEY in backend/.env (never commit .env)
+Model:        GROQ_MODEL env var (default: llama-3.3-70b-versatile)
+
+CLASSIFICATION KNOWLEDGE BASE (result_kb)
+  - Eight structured profiles in result_engine.py
+  - Each profile lists allowed answer values per quiz dimension
+  - priority field (1–8) breaks ties when multiple profiles match
+  - LLM instructed to return ONLY valid JSON, no markdown
+  - Output fields: id, title, personality, basecamp, partner, treasure,
+    funBalance, downtime, rankingView, afterGraduation, description, reason,
+    confidence (0–100 integer)
+
+STEP 1 — PERSONALITY PROMPT
+  - System: expert personality classification AI
+  - Injects full result_kb + user answer JSON
+  - Rules: closest match, lower priority number wins ties, single string per field
+  - Parses JSON from model response (extract_json handles fenced code blocks)
+
+STEP 2 — UNIVERSITY RECOMMENDATION PROMPT
+  - Runs only if Excel data loaded successfully
+  - Filters universities where personality title appears in personality_match column
+  - Considers: basecamp style, ranking view, budget/treasure, after-graduation plan,
+    passion/field of study (course names and “why” tailored to passion)
+  - Returns exactly 3 recommendations with rank, name, city, state, qs_ranking,
+    why, top_courses, intl_fee, domestic_fee
+
+ERROR HANDLING
+  - Missing GROQ_API_KEY → 500 with clear error message
+  - Groq/parse failures → error + details in JSON response
+  - Frontend shows personality-result-screen--error state with Retry
+  - Missing Excel → uni_warning, empty recommendations array
+
+================================================================================
+5. API ENDPOINTS
+================================================================================
+
+GET  /api/hello
+POST /api/auth/register
+POST /api/auth/login
+GET  /api/auth/me          (Authorization: Bearer <token>)
+GET  /api/questions/languages
+GET  /api/questions/<language>
+POST /api/generate-result  (quiz answer JSON body)
+
+PRODUCTION STATIC
+GET  /*                    Flask serves frontend/dist (SPA fallback to index.html)
+
+================================================================================
+6. KEY FRONTEND MODULES
+================================================================================
+
+App.tsx
+  - Central router (screen state), API calls, language loading, quiz state,
+    dev preview route detection, overlay controls
+
+screens/
+  LoginScreen, RegisterScreen, TitleScreen, PassionScreen, PartnerScreen,
+  TreasureScreen, FunStudiesScreen, BasecampScreen, AdventureScreen,
+  RechargeScreen, GraduationScreen, ResultsRevealScreen,
+  PersonalityResultScreen, results/PersonalityResultLayout
+
+data/personalityThemes.ts
+  - PERSONALITY_THEMES, resolvePersonalityId(), createMockQuizResult()
+
+utils/
+  quizAnswers.ts       — payload builder, option label fallbacks
+  mapQuizResult.ts     — API → view model for result UI
+  personalityResultCardColors.ts — random card colors, adjacency rules
+
+types/
+  quizContent.ts, quizResult.ts
+
+components/
+  DeviceFrame, Button, Typography, PersonalityResultDevNav
+
+config/
+  devPreviewRoute.ts
+
+================================================================================
+7. KEY BACKEND MODULES
+================================================================================
+
+app.py
+  - Flask routes, JWT auth, SQLite init, language file serving, static SPA
+
+result_engine.py
+  - ResultEngine class: Excel load, Groq calls, prompts, generate()
+
+questions/
+  - English.txt, Chinese.txt — JSON: title, ui, questions{...}
+
+australian_universities_2026.xlsx
+  - Required for university recommendations (optional but recommended)
+
+auth.db
+  - Created at runtime; gitignored
+
+.env (gitignored)
+  - SECRET_KEY, GROQ_API_KEY, GROQ_MODEL
+
+================================================================================
+8. ENVIRONMENT & RUN COMMANDS
+================================================================================
+
+Development (two processes):
+  Backend:  .venv/Scripts/python backend/app.py     → :5000
+  Frontend: cd frontend && npm run dev              → :5173
+
+Single-line (from repo root, requires npx):
+  npx --yes concurrently -n api,web -c blue,green ".venv/Scripts/python.exe backend/app.py" "npm run dev --prefix frontend"
+
+Production-like:
+  cd frontend && npm run build
+  python backend/app.py   (serves frontend/dist on :5000)
+
+================================================================================
+9. REPOSITORY LAYOUT
+================================================================================
+
+TAPv2/
+├── backend/
+│   ├── app.py
+│   ├── result_engine.py
+│   ├── requirements.txt
+│   ├── questions/          # Language JSON files
+│   ├── australian_universities_2026.xlsx
+│   └── .env                # Local secrets (not in git)
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx
+│   │   ├── screens/
+│   │   ├── components/
+│   │   ├── data/
+│   │   ├── utils/
+│   │   ├── types/
+│   │   ├── config/
+│   │   └── main.css
+│   ├── public/asq/         # Images, personality result assets
+│   ├── package.json
+│   └── vite.config.ts
+├── readme.md
+├── PROJECT_OVERVIEW.txt    # This file
+└── .gitignore
+
+================================================================================
+10. DESIGN CONSTRAINTS & CONVENTIONS
+================================================================================
+
+  - Mobile-first UI inside fixed device frame (~phone aspect ratio)
+  - Quiz uses internal option keys; API receives human-readable labels
+  - Personality resolved by API id/title → theme assets on frontend
+  - No separate page per personality — one layout, data-driven
+  - CORS enabled on Flask for cross-origin dev if needed
+  - V2 changes should push to TAPv2 GitHub remote, not legacy TAP client repo
+
+================================================================================
+11. SUMMARY FOR ANOTHER GENAI ASSISTANT
+================================================================================
+
+When extending this project:
+  - Preserve quiz option keys when adding translations
+  - New personalities need result_kb entry + personalityThemes + asset folder
+  - AI behavior changes belong in result_engine.py prompts
+  - UI copy changes may be in questions/*.txt OR generated by Groq on result page
+  - Do not commit .env or auth.db
+  - Test all 8 result UIs via secret preview path without burning API credits
+  - Full quiz test requires backend running with valid GROQ_API_KEY
+
+End of document.
