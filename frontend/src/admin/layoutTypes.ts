@@ -7,6 +7,7 @@ export type LayoutElementType =
   | 'shape'
   | 'divider'
   | 'icon'
+  | 'language_switch'
 
 export type TextAlign = 'left' | 'center' | 'right'
 export type ObjectFit = 'contain' | 'cover' | 'fill'
@@ -93,6 +94,15 @@ export type IntroLayout = {
   subtitle?: string
   startButton?: string
   elements?: LayoutElement[]
+  i18n?: Record<
+    string,
+    {
+      heading?: string
+      subtitle?: string
+      startButton?: string
+      elements?: Record<string, { content?: string; placeholder?: string; carouselItems?: CarouselItem[] }>
+    }
+  >
 }
 
 export type ScreenBackgroundImageFit = 'cover' | 'contain' | 'fill'
@@ -384,6 +394,17 @@ export const DEFAULT_ICON_STYLE: Partial<LayoutElement> = {
   action: { type: 'none' },
 }
 
+export const DEFAULT_LANGUAGE_SWITCH_STYLE: Partial<LayoutElement> = {
+  backgroundColor: '#ffffff',
+  color: '#0f172a',
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: '#cbd5e1',
+  fontSize: 16,
+  zIndex: 20,
+  action: { type: 'none' },
+}
+
 const DEFAULTS_BY_TYPE: Record<LayoutElementType, Partial<LayoutElement>> = {
   text: DEFAULT_TEXT_STYLE,
   textbox: DEFAULT_TEXTBOX_STYLE,
@@ -393,6 +414,7 @@ const DEFAULTS_BY_TYPE: Record<LayoutElementType, Partial<LayoutElement>> = {
   shape: DEFAULT_SHAPE_STYLE,
   divider: DEFAULT_DIVIDER_STYLE,
   icon: DEFAULT_ICON_STYLE,
+  language_switch: DEFAULT_LANGUAGE_SWITCH_STYLE,
 }
 
 const DEFAULT_SIZE: Record<LayoutElementType, { width: number; height: number }> = {
@@ -404,6 +426,7 @@ const DEFAULT_SIZE: Record<LayoutElementType, { width: number; height: number }>
   shape: { width: 120, height: 120 },
   divider: { width: 280, height: 4 },
   icon: { width: 64, height: 64 },
+  language_switch: { width: 200, height: 48 },
 }
 
 export function newElementId(): string {
@@ -441,6 +464,23 @@ export function createLayoutElement(type: LayoutElementType, at?: { x?: number; 
   if (type === 'text') base.content = 'Text label'
   if (type === 'icon') base.content = '★'
   return base
+}
+
+export function createLanguageSwitchElement(at?: { x?: number; y?: number }): LayoutElement {
+  const size = DEFAULT_SIZE.language_switch
+  return {
+    id: newElementId(),
+    type: 'language_switch',
+    x: at?.x ?? Math.round((CANVAS_W - size.width) / 2),
+    y: at?.y ?? Math.round((CANVAS_H - size.height) / 2),
+    width: size.width,
+    height: size.height,
+    ...DEFAULT_LANGUAGE_SWITCH_STYLE,
+  }
+}
+
+export function layoutHasLanguageSwitch(elements: LayoutElement[] | undefined): boolean {
+  return (elements ?? []).some((el) => el.type === 'language_switch')
 }
 
 function parseAction(raw: unknown): ElementAction {
@@ -542,6 +582,7 @@ const VALID_TYPES: LayoutElementType[] = [
   'shape',
   'divider',
   'icon',
+  'language_switch',
 ]
 
 export const LAYOUT_ELEMENT_DRAG_MIME = 'application/x-tap-layout-element'

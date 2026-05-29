@@ -1,9 +1,12 @@
 import React from 'react'
+import type { QuizLanguage } from '../builderTypes'
 import type { LayoutElement, TextAlign } from '../layoutTypes'
 
 type LayoutElementViewProps = {
   element: LayoutElement
   hasAction?: boolean
+  languages?: QuizLanguage[]
+  previewLanguage?: string
 }
 
 function rowJustify(align?: TextAlign): React.CSSProperties['justifyContent'] {
@@ -12,10 +15,52 @@ function rowJustify(align?: TextAlign): React.CSSProperties['justifyContent'] {
   return 'center'
 }
 
-export function LayoutElementView({ element, hasAction }: LayoutElementViewProps) {
+export function LayoutElementView({
+  element,
+  hasAction,
+  languages = [],
+  previewLanguage,
+}: LayoutElementViewProps) {
   const actionHint = hasAction && element.action?.type && element.action.type !== 'none'
 
   switch (element.type) {
+    case 'language_switch': {
+      const codes = languages.length > 0 ? languages.map((l) => l.language_code) : ['English', 'Spanish']
+      const selected = previewLanguage || codes[0]
+      return (
+        <div
+          className="admin-layout-el-language-switch"
+          style={{ justifyContent: rowJustify(element.textAlign) }}
+        >
+          <select
+            className="admin-layout-language-switch-select"
+            value={selected}
+            aria-label="Language switch preview"
+            disabled
+            style={{
+              width: '100%',
+              height: '100%',
+              fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
+              color: element.color,
+              backgroundColor: element.backgroundColor,
+              borderRadius: element.borderRadius ? `${element.borderRadius}px` : undefined,
+              borderWidth: element.borderWidth != null ? `${element.borderWidth}px` : undefined,
+              borderColor: element.borderColor,
+              borderStyle: element.borderWidth ? 'solid' : undefined,
+            }}
+          >
+            {codes.map((code) => {
+              const lang = languages.find((l) => l.language_code === code)
+              return (
+                <option key={code} value={code}>
+                  {lang?.language_name || code}
+                </option>
+              )
+            })}
+          </select>
+        </div>
+      )
+    }
     case 'textbox':
       return (
         <div className="admin-layout-el-textbox">

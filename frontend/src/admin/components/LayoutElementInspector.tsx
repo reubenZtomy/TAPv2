@@ -79,7 +79,7 @@ export function LayoutElementInspector({
     )
   }
 
-  const hasTypography = ['text', 'textbox', 'button', 'icon'].includes(element.type)
+  const hasTypography = ['text', 'textbox', 'button', 'icon', 'language_switch'].includes(element.type)
 
   return (
     <aside className="admin-layout-inspector">

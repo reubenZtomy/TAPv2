@@ -71,6 +71,8 @@ export function resolveConditionOptionKey(
 export type CustomResultCondition = {
   questionKey: string
   optionKey: string
+  /** When set, this rule only matches when the student selected this quiz language. */
+  languageCode?: string
 }
 
 /** Legacy shape stored before layout-based result screens. */
@@ -90,6 +92,8 @@ export type CustomResultRule = {
   conditions: CustomResultCondition[]
   /** Layout JSON (elements + screen background), same structure as question layouts. */
   layout: Record<string, unknown>
+  /** Optional per-language result screen layouts. */
+  layoutByLanguage?: Record<string, Record<string, unknown>>
 }
 
 type StoredRule = CustomResultRule & { resultScreen?: LegacyResultScreen }
@@ -164,6 +168,8 @@ function normalizeRule(raw: StoredRule): CustomResultRule {
     resultDescription: raw.resultDescription ?? '',
     conditions: Array.isArray(raw.conditions) ? raw.conditions : [],
     layout,
+    layoutByLanguage:
+      raw.layoutByLanguage && typeof raw.layoutByLanguage === 'object' ? raw.layoutByLanguage : undefined,
   }
 }
 
@@ -212,6 +218,36 @@ export function updateResultLayoutInList(
   return rules.map((r) => (r.id === resultId ? { ...r, layout } : r))
 }
 
+export function updateResultLayoutForLanguage(
+  rules: CustomResultRule[],
+  resultId: string,
+  languageCode: string,
+  layout: Record<string, unknown>,
+  defaultLanguage?: string
+): CustomResultRule[] {
+  return rules.map((r) => {
+    if (r.id !== resultId) return r
+    if (!languageCode.trim() || (defaultLanguage && languageCode === defaultLanguage)) {
+      return { ...r, layout }
+    }
+    return {
+      ...r,
+      layoutByLanguage: { ...(r.layoutByLanguage || {}), [languageCode]: layout },
+    }
+  })
+}
+
+export function resolveResultLayoutSource(
+  rule: CustomResultRule,
+  languageCode: string,
+  defaultLanguage?: string
+): Record<string, unknown> {
+  if (!languageCode.trim() || (defaultLanguage && languageCode === defaultLanguage)) {
+    return rule.layout
+  }
+  return rule.layoutByLanguage?.[languageCode] || rule.layout
+}
+
 export function normalizeAnswerKey(value: string | undefined): string {
   return (value || '').trim().toLowerCase()
 }
@@ -232,8 +268,10 @@ export function answersFromQuestionIds(
 /** Same matching order as the public quiz: most conditions first, all must match. */
 export function matchCustomResultRule(
   rules: CustomResultRule[],
-  answers: Record<string, string>
+  answers: Record<string, string>,
+  selectedLanguage?: string
 ): CustomResultRule | null {
+  const normalizeLang = (value: string | undefined) => (value || '').trim().toLowerCase()
   const conditionMatches = (questionKey: string, expected: string | undefined) =>
     normalizeAnswerKey(answers[questionKey]) === normalizeAnswerKey(expected)
 
@@ -243,9 +281,23 @@ export function matchCustomResultRule(
       .find(
         (rule) =>
           rule.conditions.length > 0 &&
-          rule.conditions.every((cond) => conditionMatches(cond.questionKey, cond.optionKey))
+          rule.conditions.every((cond) => {
+            if (cond.languageCode?.trim()) {
+              if (normalizeLang(selectedLanguage) !== normalizeLang(cond.languageCode)) return false
+            }
+            return conditionMatches(cond.questionKey, cond.optionKey)
+          })
       ) ?? null
   )
+}
+
+export function resolveResultLayoutForLanguage(
+  rule: CustomResultRule,
+  languageCode?: string
+): Record<string, unknown> {
+  const code = languageCode?.trim()
+  if (code && rule.layoutByLanguage?.[code]) return rule.layoutByLanguage[code]
+  return rule.layout
 }
 
 export function sanitizeResultRuleConditions(
@@ -261,6 +313,7 @@ export function sanitizeResultRuleConditions(
       return {
         questionKey: c.questionKey,
         optionKey: resolveConditionOptionKey(c.optionKey, options),
+        languageCode: c.languageCode?.trim() || undefined,
       }
     }),
   }

@@ -13,6 +13,7 @@ import { AdminDashboardPage } from './pages/AdminDashboardPage'
 import { AdminQuizzesPage } from './pages/AdminQuizzesPage'
 import { AdminQuizBuilderPage } from './pages/AdminQuizBuilderPage'
 import { AdminQuestionDesignPage } from './pages/AdminQuestionDesignPage'
+import { AdminIntroDesignPage } from './pages/AdminIntroDesignPage'
 import { AdminResultScreenDesignPage } from './pages/AdminResultScreenDesignPage'
 
 import { AdminThemeProvider } from './AdminThemeContext'
@@ -34,6 +35,7 @@ function AdminProtected({ user, onLogout }: { user: AdminUser; onLogout: () => v
 
         <Route path="quizzes" element={<AdminQuizzesPage />} />
         <Route path="quizzes/:id/builder/answers/design/:resultId" element={<AdminResultScreenDesignPage />} />
+        <Route path="quizzes/:id/builder/intro/design" element={<AdminIntroDesignPage />} />
         <Route path="quizzes/:id/builder/design/:questionId" element={<AdminQuestionDesignPage />} />
         <Route path="quizzes/:id/builder" element={<AdminQuizBuilderPage />} />
         <Route index element={<Navigate to="dashboard" replace />} />

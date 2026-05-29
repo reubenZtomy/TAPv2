@@ -2,10 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import {
   addQuestion,
-  addQuizLanguage,
   createQuizLink,
   deleteQuestion,
-  deleteQuizLanguage,
   fetchQuizBuilder,
   fetchQuizLinks,
   publishQuiz,
@@ -32,6 +30,7 @@ import {
 import { TableRowActionsMenu } from '../components/TableRowActionsMenu'
 import { AdminQuizBuilderTabs, type AdminBuilderTab } from '../components/AdminQuizBuilderTabs'
 import { AdminQuizLinksPanel } from '../components/AdminQuizLinksPanel'
+import { QuizLanguagesPanel } from '../components/QuizLanguagesPanel'
 import {
   questionDisplayName,
 } from '../builderDisplay'
@@ -71,8 +70,6 @@ export function AdminQuizBuilderPage() {
   const [editLang, setEditLang] = useState('English')
 
   const [details, setDetails] = useState({ name: '', description: '' })
-  const [newLangCode, setNewLangCode] = useState('')
-  const [newLangName, setNewLangName] = useState('')
   const [addQuestionOpen, setAddQuestionOpen] = useState(false)
   const [previewQuestionId, setPreviewQuestionId] = useState<number | null>(null)
   const [duplicateSourceQuestionId, setDuplicateSourceQuestionId] = useState<number | null>(null)
@@ -198,26 +195,6 @@ export function AdminQuizBuilderPage() {
       setMessage(res.message)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed')
-    }
-  }
-
-  const handleAddLanguage = async () => {
-    if (!newLangCode.trim()) return
-    try {
-      const res = await addQuizLanguage(quizId, {
-        language_code: newLangCode.trim(),
-        language_name: newLangName.trim() || newLangCode.trim(),
-      })
-      applyQuiz(res.quiz)
-      setNewLangCode('')
-      setNewLangName('')
-      setMessage(
-        res.quiz.questions.length === 0
-          ? 'Language added. Use the Questions section above to add quiz screens.'
-          : 'Language added'
-      )
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Add language failed')
     }
   }
 
@@ -353,6 +330,12 @@ export function AdminQuizBuilderPage() {
       }
 
       for (const cond of rule.conditions) {
+        if (cond.languageCode?.trim()) {
+          const known = quiz.languages.some((l) => l.language_code === cond.languageCode)
+          if (!known) {
+            issues.push(`Language "${cond.languageCode}" is not configured on this quiz.`)
+          }
+        }
         if (!availableQuestionKeys.has(cond.questionKey)) {
           issues.push(`Question "${cond.questionKey}" no longer exists.`)
           continue
@@ -371,12 +354,15 @@ export function AdminQuizBuilderPage() {
         }
       }
 
-      const seenQuestionKeys = new Set<string>()
-      for (const key of rule.conditions.map((c) => c.questionKey)) {
-        if (seenQuestionKeys.has(key)) {
-          issues.push(`Question "${key}" is mapped more than once in this rule.`)
+      const seenConditionKeys = new Set<string>()
+      for (const cond of rule.conditions) {
+        const signature = `${cond.languageCode || '*'}:${cond.questionKey}`
+        if (seenConditionKeys.has(signature)) {
+          issues.push(
+            `Question "${cond.questionKey}"${cond.languageCode ? ` for ${cond.languageCode}` : ''} is mapped more than once in this rule.`
+          )
         }
-        seenQuestionKeys.add(key)
+        seenConditionKeys.add(signature)
       }
 
       return [rule.id, uniqueConditionIssueMessages(issues)] as const
@@ -503,55 +489,17 @@ export function AdminQuizBuilderPage() {
 
       {activeTab === 'languages' && (
         <div className="admin-builder-grid">
-        <div className="admin-builder-column">
-          <section className="admin-panel admin-builder-tab-panel" id="builder-languages">
-            <h2 className="admin-section-title">Languages</h2>
-            <p className="admin-muted">Translations only — does not add quiz screens. Editing: <strong>{editLang}</strong></p>
-            <ul className="admin-lang-list">
-              {quiz.languages.map((lang) => (
-                <li key={lang.id}>
-                  <button
-                    type="button"
-                    className={`admin-btn admin-btn--small ${editLang === lang.language_code ? 'admin-btn--active' : ''}`}
-                    onClick={() => setEditLang(lang.language_code)}
-                  >
-                    {lang.language_name}
-                    {lang.is_default ? ' ★' : ''}
-                  </button>
-                  <button
-                    type="button"
-                    className="admin-btn admin-btn--danger admin-btn--small"
-                    onClick={() =>
-                      void deleteQuizLanguage(quizId, lang.id).then((r) => {
-                        applyQuiz(r.quiz)
-                        setMessage('Language removed')
-                      })
-                    }
-                  >
-                    ×
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <div className="admin-toolbar">
-              <input
-                className="admin-input"
-                placeholder="Code e.g. English"
-                value={newLangCode}
-                onChange={(e) => setNewLangCode(e.target.value)}
-              />
-              <input
-                className="admin-input"
-                placeholder="Display name"
-                value={newLangName}
-                onChange={(e) => setNewLangName(e.target.value)}
-              />
-              <button type="button" className="admin-btn" onClick={() => void handleAddLanguage()}>
-                Add
-              </button>
-            </div>
-          </section>
-        </div>
+          <div className="admin-builder-column">
+            <QuizLanguagesPanel
+              quiz={quiz}
+              quizId={quizId}
+              editLang={editLang}
+              onEditLangChange={setEditLang}
+              onQuizUpdated={applyQuiz}
+              onError={setError}
+              onMessage={setMessage}
+            />
+          </div>
         </div>
       )}
 
@@ -574,7 +522,14 @@ export function AdminQuizBuilderPage() {
                       ...emptyResultDraft(),
                       conditions:
                         firstQuestion && firstOption
-                          ? [{ questionKey: firstQuestion.question_key, optionKey: firstOption.key }]
+                          ? [
+                              {
+                                questionKey: firstQuestion.question_key,
+                                optionKey: firstOption.key,
+                                languageCode:
+                                  quiz.languages.length > 0 ? editLang : undefined,
+                              },
+                            ]
                           : [],
                     },
                     quiz.questions,
@@ -588,6 +543,7 @@ export function AdminQuizBuilderPage() {
           </div>
           <p className="admin-muted">
             Define result rules by mapping question option selections to a custom result outcome.
+            When multiple languages are configured, each condition can also require a specific language.
           </p>
 
           {customResults.length === 0 ? (
@@ -885,6 +841,39 @@ export function AdminQuizBuilderPage() {
                 const optionSelectValue = resolveConditionOptionKey(cond.optionKey, options)
                 return (
                   <div key={`condition-${idx}`} className="admin-custom-result-condition-row">
+                    {quiz.languages.length > 0 ? (
+                      <label className="admin-inspector-field">
+                        <span className="admin-inspector-label">Language</span>
+                        <select
+                          className="admin-select admin-inspector-input"
+                          value={cond.languageCode || ''}
+                          onChange={(e) =>
+                            setResultDraft((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    conditions: prev.conditions.map((c, i) =>
+                                      i === idx
+                                        ? {
+                                            ...c,
+                                            languageCode: e.target.value.trim() || undefined,
+                                          }
+                                        : c
+                                    ),
+                                  }
+                                : prev
+                            )
+                          }
+                        >
+                          <option value="">Any language</option>
+                          {quiz.languages.map((lang) => (
+                            <option key={lang.id} value={lang.language_code}>
+                              {lang.language_name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
                     <label className="admin-inspector-field">
                       <span className="admin-inspector-label">Question</span>
                       <select
@@ -899,7 +888,13 @@ export function AdminQuizBuilderPage() {
                               ? {
                                   ...prev,
                                   conditions: prev.conditions.map((c, i) =>
-                                    i === idx ? { questionKey: nextQuestionKey, optionKey: nextOption } : c
+                                    i === idx
+                                      ? {
+                                          ...c,
+                                          questionKey: nextQuestionKey,
+                                          optionKey: nextOption,
+                                        }
+                                      : c
                                   ),
                                 }
                               : prev
@@ -984,7 +979,12 @@ export function AdminQuizBuilderPage() {
                             ...prev,
                             conditions: [
                               ...prev.conditions,
-                              { questionKey: q.question_key, optionKey: option.key },
+                              {
+                                questionKey: q.question_key,
+                                optionKey: option.key,
+                                languageCode:
+                                  quiz.languages.length > 0 ? editLang : undefined,
+                              },
                             ],
                           },
                           quiz.questions,

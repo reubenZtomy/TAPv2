@@ -2054,6 +2054,91 @@ a.admin-btn--design {
   margin-bottom: 8px;
 }
 
+.admin-lang-warning {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--admin-text);
+  font-size: 0.95em;
+}
+
+.admin-lang-card-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-lang-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: var(--admin-surface-muted);
+}
+
+.admin-lang-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-lang-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-lang-upload-block {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--admin-border);
+}
+
+.admin-lang-upload-toolbar {
+  flex-wrap: wrap;
+}
+
+.admin-file-input-hidden {
+  display: none;
+}
+
+.admin-layout-el-language-switch,
+.ql-el-language-switch {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+}
+
+.admin-layout-language-switch-select,
+.ql-language-switch-select {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 0 12px;
+  appearance: auto;
+}
+
+.admin-result-language-toolbar {
+  margin-bottom: 12px;
+  align-items: flex-end;
+}
+
+.admin-result-language-field {
+  min-width: 220px;
+  margin-bottom: 0;
+}
+
+.admin-result-language-note {
+  margin: 0;
+  flex: 1;
+  min-width: 220px;
+}
+
 .admin-question-item {
   flex: 1;
   text-align: left;

@@ -13,6 +13,7 @@ from database import get_connection, row_to_dict
 from quiz_builder_constants import LAYOUT_TYPES, default_layout_json
 from quiz_builder_service import load_quiz_builder, validate_publish
 from quiz_font_service import delete_quiz_font, save_quiz_font
+from quiz_language_json import import_quiz_language_json
 from quiz_layout_presets import get_layout_preset, list_layout_presets
 
 admin_builder_bp = Blueprint('admin_builder', __name__, url_prefix='/api/admin')
@@ -256,6 +257,26 @@ def add_language(admin_user, quiz_id):
 
     payload = load_quiz_builder(quiz_id)
     return jsonify({'quiz': payload}), 201
+
+
+@admin_builder_bp.route('/quizzes/<int:quiz_id>/import-language-json', methods=['POST'])
+@admin_required
+def import_language_json(admin_user, quiz_id):
+    body = request.get_json(force=True, silent=True) or {}
+    payload = body.get('json') or body.get('payload')
+    if not isinstance(payload, dict):
+        return jsonify({'error': 'json payload is required'}), 400
+    language_code = (body.get('language_code') or '').strip() or None
+    language_name = (body.get('language_name') or '').strip() or None
+    quiz, err = import_quiz_language_json(quiz_id, payload, language_code, language_name)
+    if err:
+        return jsonify({'error': err}), 400
+    lang_code = language_code or (payload.get('_language') or {}).get('target_language') or ''
+    return jsonify({
+        'quiz': quiz,
+        'language_code': lang_code,
+        'message': 'Language successfully added. Please add the language switcher element on your design.',
+    })
 
 
 @admin_builder_bp.route('/quizzes/<int:quiz_id>/languages/<int:language_id>', methods=['DELETE'])

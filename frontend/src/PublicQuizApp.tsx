@@ -17,7 +17,8 @@ import { QuizLayoutScreen } from './layout/QuizLayoutScreen'
 import { TitleScreen } from './screens/TitleScreen'
 import { QuizContent } from './types/quizContent'
 import { nextQuestionKey, prevQuestionKey } from './utils/quizFlow'
-import { loadCustomResults, resolveLayoutAnswerKey, type CustomResultRule } from './admin/customResults'
+import { loadCustomResults, resolveLayoutAnswerKey, resolveResultLayoutForLanguage, matchCustomResultRule, type CustomResultRule } from './admin/customResults'
+import { applyLayoutLanguage } from './admin/layoutI18n'
 
 type QuizAnswers = Record<string, string>
 
@@ -47,6 +48,7 @@ export function PublicQuizApp({ publicQuiz }: PublicQuizAppProps) {
   const useIntroLayoutOverlay = introLayoutElements.length > 0
   const introConfigured = useMemo(() => isIntroConfigured(publicQuiz.intro_layout), [publicQuiz.intro_layout])
   const customFont = publicQuiz.custom_font ?? null
+  const defaultLanguage = publicQuiz.default_language || publicQuiz.languages?.[0] || 'English'
 
   const [screen, setScreen] = useState<ScreenId>('title')
   const [layoutTarget, setLayoutTarget] = useState<PreviewTarget>('intro')
@@ -58,6 +60,24 @@ export function PublicQuizApp({ publicQuiz }: PublicQuizAppProps) {
   const [customResultRule, setCustomResultRule] = useState<CustomResultRule | null>(null)
   const [layoutPendingAnswers, setLayoutPendingAnswers] = useState<Record<string, string>>({})
   const [layoutSelectionError, setLayoutSelectionError] = useState('')
+
+  const languageLabels = useMemo(() => {
+    const labels: Record<string, string> = {}
+    for (const code of publicQuiz.languages || []) {
+      labels[code] = code
+    }
+    return labels
+  }, [publicQuiz.languages])
+
+  const localizedIntroElements = useMemo(
+    () =>
+      applyLayoutLanguage(
+        { elements: introLayoutElements, i18n: publicQuiz.intro_layout?.i18n },
+        selectedLanguage,
+        defaultLanguage
+      ),
+    [introLayoutElements, publicQuiz.intro_layout, selectedLanguage, defaultLanguage]
+  )
 
   const getQuestionText = (key: string, fallback: string) => {
     const questions = quizContent?.questions as Record<string, { question?: string }> | undefined
@@ -123,11 +143,7 @@ export function PublicQuizApp({ publicQuiz }: PublicQuizAppProps) {
       if (quizId) {
         const customRules = loadCustomResults(quizId)
         if (customRules.length > 0) {
-          const matched = [...customRules]
-            .sort((a, b) => b.conditions.length - a.conditions.length)
-            .find((rule) =>
-              rule.conditions.every((cond) => conditionMatches(answers, cond.questionKey, cond.optionKey))
-            )
+          const matched = matchCustomResultRule(customRules, answers, selectedLanguage)
           setCustomResultRule(matched || null)
           setScreen(matched ? 'customResult' : 'noResult')
           return
@@ -135,7 +151,7 @@ export function PublicQuizApp({ publicQuiz }: PublicQuizAppProps) {
       }
       setScreen('complete')
     },
-    [publicQuiz]
+    [publicQuiz, selectedLanguage]
   )
 
   const navigateNext = useCallback(
@@ -257,6 +273,27 @@ export function PublicQuizApp({ publicQuiz }: PublicQuizAppProps) {
     [layoutTarget, questionsLayout]
   )
 
+  const activeLayoutElements = useMemo(() => {
+    if (!activeLayoutQuestion) return []
+    return applyLayoutLanguage(activeLayoutQuestion.layout, selectedLanguage, defaultLanguage)
+  }, [activeLayoutQuestion, selectedLanguage, defaultLanguage])
+
+  const customResultLayout = useMemo(() => {
+    if (!customResultRule) return {}
+    const base = resolveResultLayoutForLanguage(customResultRule, selectedLanguage)
+    return {
+      ...base,
+      elements: applyLayoutLanguage(base, selectedLanguage, defaultLanguage),
+    }
+  }, [customResultRule, selectedLanguage, defaultLanguage])
+
+  const layoutLanguageProps = {
+    languages: publicQuiz.allow_language_selection === false ? [] : languages,
+    languageLabels,
+    selectedLanguage,
+    onLanguageChange: setSelectedLanguage,
+  }
+
   const startQuiz = () => {
     setQuizAnswers({})
     setLayoutPendingAnswers({})
@@ -272,7 +309,7 @@ export function PublicQuizApp({ publicQuiz }: PublicQuizAppProps) {
           {screen === 'title' &&
             (useIntroLayoutOverlay ? (
               <QuizLayoutScreen
-                elements={introLayoutElements}
+                elements={localizedIntroElements}
                 customFont={customFont}
                 base={
                   <TitleScreen
@@ -280,12 +317,10 @@ export function PublicQuizApp({ publicQuiz }: PublicQuizAppProps) {
                     titleText={quizContent?.title?.heading}
                     subtitleText={quizContent?.title?.subtitle}
                     startButtonText={quizContent?.title?.startButton}
-                    languages={languages}
-                    selectedLanguage={selectedLanguage}
-                    onLanguageChange={setSelectedLanguage}
                   />
                 }
                 onElementAction={handleLayoutElementAction}
+                {...layoutLanguageProps}
               />
             ) : (
               <TitleScreen
@@ -299,9 +334,9 @@ export function PublicQuizApp({ publicQuiz }: PublicQuizAppProps) {
               />
             ))}
 
-          {screen === 'layout' && activeLayoutQuestion && getLayoutElements(activeLayoutQuestion.layout).length > 0 && (
+          {screen === 'layout' && activeLayoutQuestion && activeLayoutElements.length > 0 && (
             <QuizLayoutScreen
-              elements={activeLayoutQuestion.layout}
+              elements={activeLayoutElements}
               customFont={customFont}
               base={
                 <div className="quiz-layout-question-base">
@@ -312,10 +347,11 @@ export function PublicQuizApp({ publicQuiz }: PublicQuizAppProps) {
                 </div>
               }
               onElementAction={handleLayoutElementAction}
+              {...layoutLanguageProps}
             />
           )}
 
-          {screen === 'layout' && activeLayoutQuestion && getLayoutElements(activeLayoutQuestion.layout).length === 0 && (
+          {screen === 'layout' && activeLayoutQuestion && activeLayoutElements.length === 0 && (
             <DynamicQuestionScreen
               questionKey={activeLayoutQuestion.question_key}
               questionText={getQuestionText(activeLayoutQuestion.question_key, activeLayoutQuestion.question_key)}
@@ -341,16 +377,17 @@ export function PublicQuizApp({ publicQuiz }: PublicQuizAppProps) {
 
           {screen === 'customResult' && customResultRule && (
             <QuizLayoutScreen
-              elements={customResultRule.layout}
+              elements={customResultLayout}
               customFont={customFont}
               base={
-                getLayoutElements(customResultRule.layout).length === 0 ? (
+                getLayoutElements(customResultLayout).length === 0 ? (
                   <div className="custom-result-fallback">
                     <h2>{customResultRule.resultTitle || 'Result'}</h2>
                     <p>{customResultRule.resultDescription || ''}</p>
                   </div>
                 ) : undefined
               }
+              {...layoutLanguageProps}
             />
           )}
 

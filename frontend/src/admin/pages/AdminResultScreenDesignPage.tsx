@@ -3,8 +3,9 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import { fetchQuizBuilder, publishQuiz, saveQuizDraft } from '../api'
 import {
   loadCustomResults,
+  resolveResultLayoutSource,
   saveCustomResults,
-  updateResultLayoutInList,
+  updateResultLayoutForLanguage,
   type CustomResultRule,
 } from '../customResults'
 import type { QuizBuilderPayload } from '../builderTypes'
@@ -21,7 +22,7 @@ export function AdminResultScreenDesignPage() {
   const [customResults, setCustomResults] = useState<CustomResultRule[]>([])
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [designLanguage, setDesignLanguage] = useState('English')
 
   const load = useCallback(async () => {
     if (!quizId || Number.isNaN(quizId)) return
@@ -31,6 +32,11 @@ export function AdminResultScreenDesignPage() {
       const data = await fetchQuizBuilder(quizId)
       setQuiz(data.quiz)
       setCustomResults(loadCustomResults(quizId))
+      const defaultLang =
+        data.quiz.languages.find((l) => l.is_default)?.language_code ||
+        data.quiz.languages[0]?.language_code ||
+        'English'
+      setDesignLanguage(defaultLang)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load quiz')
     } finally {
@@ -67,8 +73,19 @@ export function AdminResultScreenDesignPage() {
   const screenName = rule.name.trim() || rule.resultTitle.trim() || 'Result'
   const validation = quiz.publish_validation
 
+  const defaultLanguage =
+    quiz.languages.find((l) => l.is_default)?.language_code ||
+    quiz.languages[0]?.language_code ||
+    'English'
+
   const persistLayout = (layout: Record<string, unknown>) => {
-    const next = updateResultLayoutInList(customResults, resultId, layout)
+    const next = updateResultLayoutForLanguage(
+      customResults,
+      resultId,
+      designLanguage,
+      layout,
+      defaultLanguage
+    )
     setCustomResults(next)
     saveCustomResults(quizId, next)
   }
@@ -135,13 +152,37 @@ export function AdminResultScreenDesignPage() {
       <AdminQuizBuilderTabs quizId={quizId} active="design" designLabel={screenName} />
 
       <section className="admin-panel admin-builder-tab-panel admin-question-design-panel">
+        {quiz.languages.length > 1 ? (
+          <div className="admin-toolbar admin-result-language-toolbar">
+            <label className="admin-inspector-field admin-result-language-field">
+              <span className="admin-inspector-label">Design language</span>
+              <select
+                className="admin-select admin-inspector-input"
+                value={designLanguage}
+                onChange={(e) => setDesignLanguage(e.target.value)}
+              >
+                {quiz.languages.map((lang) => (
+                  <option key={lang.id} value={lang.language_code}>
+                    {lang.language_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="admin-muted admin-result-language-note">
+              Build a separate result screen layout for each language when needed.
+            </p>
+          </div>
+        ) : null}
         <ResultScreenDesigner
           ref={designerRef}
-          key={rule.id}
+          key={`${rule.id}-${designLanguage}`}
           quizId={quizId}
           customFont={quiz.custom_font}
           onQuizFontUpdated={setQuiz}
           rule={rule}
+          designLanguage={designLanguage}
+          defaultLanguage={defaultLanguage}
+          languages={quiz.languages}
           onLayoutSaved={persistLayout}
           onError={setError}
           onMessage={setMessage}

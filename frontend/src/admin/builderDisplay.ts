@@ -42,7 +42,10 @@ export function buildQuestionLayoutJson(
         elements,
         template: (question.layout?.template as string) || layoutType,
       }
-    : { elements }
+    : { ...question.layout, elements }
+  if (question.layout?.i18n && typeof question.layout.i18n === 'object') {
+    base.i18n = question.layout.i18n
+  }
   if (screenBackground) {
     applyScreenBackgroundToLayout(base, screenBackground)
   }

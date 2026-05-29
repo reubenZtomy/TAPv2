@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useImperativeHandle, useState } from 'react'
-import { buildResultLayoutJson } from '../customResults'
-import type { CustomResultRule } from '../customResults'
-import type { QuizBuilderPayload } from '../builderTypes'
+import { buildResultLayoutJson, resolveResultLayoutSource, type CustomResultRule } from '../customResults'
+import type { QuizBuilderPayload, QuizLanguage } from '../builderTypes'
 import type { QuizCustomFont } from '../../utils/quizFont'
 import {
   getLayoutElements,
@@ -21,6 +20,9 @@ type ResultScreenDesignerProps = {
   customFont?: QuizCustomFont | null
   onQuizFontUpdated?: (quiz: QuizBuilderPayload) => void
   rule: CustomResultRule
+  designLanguage?: string
+  defaultLanguage?: string
+  languages?: QuizLanguage[]
   onLayoutSaved: (layout: Record<string, unknown>) => void
   onError: (message: string) => void
   onMessage: (message: string) => void
@@ -28,23 +30,36 @@ type ResultScreenDesignerProps = {
 
 export const ResultScreenDesigner = React.forwardRef<ResultScreenDesignerHandle, ResultScreenDesignerProps>(
   function ResultScreenDesigner(
-    { quizId, customFont, onQuizFontUpdated, rule, onLayoutSaved, onError, onMessage },
+    {
+      quizId,
+      customFont,
+      onQuizFontUpdated,
+      rule,
+      designLanguage = 'English',
+      defaultLanguage = 'English',
+      languages = [],
+      onLayoutSaved,
+      onError,
+      onMessage,
+    },
     ref
   ) {
-    const [elements, setElements] = useState<LayoutElement[]>(() => getLayoutElements(rule.layout))
+    const layoutSource = resolveResultLayoutSource(rule, designLanguage, defaultLanguage)
+    const [elements, setElements] = useState<LayoutElement[]>(() => getLayoutElements(layoutSource))
     const [screenBackground, setScreenBackground] = useState<ScreenBackgroundSettings>(() =>
-      getScreenBackgroundSettings(rule.layout)
+      getScreenBackgroundSettings(layoutSource)
     )
     const [saving, setSaving] = useState(false)
 
     const syncFromRule = useCallback(() => {
-      setElements(getLayoutElements(rule.layout))
-      setScreenBackground(getScreenBackgroundSettings(rule.layout))
-    }, [rule.layout])
+      const nextLayout = resolveResultLayoutSource(rule, designLanguage, defaultLanguage)
+      setElements(getLayoutElements(nextLayout))
+      setScreenBackground(getScreenBackgroundSettings(nextLayout))
+    }, [rule, designLanguage, defaultLanguage])
 
     useEffect(() => {
       syncFromRule()
-    }, [rule.id, syncFromRule])
+    }, [rule.id, designLanguage, syncFromRule])
 
     const saveLayout = async (nextElements: LayoutElement[], nextBackground: ScreenBackgroundSettings) => {
       setSaving(true)
@@ -89,6 +104,8 @@ export const ResultScreenDesigner = React.forwardRef<ResultScreenDesignerHandle,
           customFont={customFont}
           onQuizFontUpdated={onQuizFontUpdated}
           showDesignerRail
+          languages={languages}
+          previewLanguage={designLanguage}
         >
           <AdminDeviceFrame screenBackground={screenBackground} customFont={customFont}>
             {elements.length === 0 ? (

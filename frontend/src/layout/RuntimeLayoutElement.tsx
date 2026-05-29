@@ -1,5 +1,6 @@
 import React from 'react'
 import type { LayoutElement, TextAlign } from '../admin/layoutTypes'
+import { LanguageSwitchElement } from './LanguageSwitchElement'
 
 function rowJustify(align?: TextAlign): React.CSSProperties['justifyContent'] {
   if (align === 'left') return 'flex-start'
@@ -9,10 +10,33 @@ function rowJustify(align?: TextAlign): React.CSSProperties['justifyContent'] {
 
 type RuntimeLayoutElementProps = {
   element: LayoutElement
+  languages?: string[]
+  languageLabels?: Record<string, string>
+  selectedLanguage?: string
+  onLanguageChange?: (language: string) => void
+  preview?: boolean
 }
 
-export function RuntimeLayoutElement({ element }: RuntimeLayoutElementProps) {
+export function RuntimeLayoutElement({
+  element,
+  languages = [],
+  languageLabels,
+  selectedLanguage = '',
+  onLanguageChange,
+  preview = false,
+}: RuntimeLayoutElementProps) {
   switch (element.type) {
+    case 'language_switch':
+      return (
+        <LanguageSwitchElement
+          element={element}
+          languages={languages}
+          languageLabels={languageLabels}
+          selectedLanguage={selectedLanguage}
+          onLanguageChange={onLanguageChange}
+          preview={preview}
+        />
+      )
     case 'textbox':
       return (
         <div className="ql-el-textbox">

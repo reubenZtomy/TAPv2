@@ -207,6 +207,20 @@ export function deleteQuizLanguage(quizId: number, languageId: number) {
   }) as Promise<{ quiz: QuizBuilderPayload }>
 }
 
+export function importQuizLanguageJson(
+  quizId: number,
+  body: {
+    json: Record<string, unknown>
+    language_code?: string
+    language_name?: string
+  }
+) {
+  return adminFetch(`/api/admin/quizzes/${quizId}/import-language-json`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }) as Promise<{ quiz: QuizBuilderPayload; language_code: string; message: string }>
+}
+
 export type LayoutPreset = {
   id: string
   name: string

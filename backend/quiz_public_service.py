@@ -36,9 +36,13 @@ def slugify(name: str) -> str:
 
 def build_quiz_content(quiz: dict, language_code: str) -> dict:
     intro = quiz.get('intro_layout') or {}
-    heading = (intro.get('heading') or '').strip()
-    subtitle = (intro.get('subtitle') or '').strip()
-    start_button = (intro.get('startButton') or '').strip()
+    intro_i18n = intro.get('i18n') or {}
+    lang_intro = intro_i18n.get(language_code) if isinstance(intro_i18n, dict) else {}
+    if not isinstance(lang_intro, dict):
+        lang_intro = {}
+    heading = (lang_intro.get('heading') or intro.get('heading') or '').strip()
+    subtitle = (lang_intro.get('subtitle') or intro.get('subtitle') or '').strip()
+    start_button = (lang_intro.get('startButton') or intro.get('startButton') or '').strip()
     title_block = {
         'heading': heading.replace('\\n', '\n') if heading else '',
         'subtitle': subtitle,

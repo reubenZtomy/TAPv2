@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { updateQuestionLayout } from '../api'
 import { buildQuestionLayoutJson, questionDisplayName } from '../builderDisplay'
 import type { QuizBuilderPayload, QuizQuestion } from '../builderTypes'
 import {
+  createLanguageSwitchElement,
   getLayoutElements,
   getScreenBackgroundSettings,
+  layoutHasLanguageSwitch,
   type LayoutElement,
   type PreviewTarget,
   type ScreenBackgroundSettings,
@@ -34,11 +36,14 @@ export const QuestionScreenDesigner = React.forwardRef<QuestionScreenDesignerHan
     ref
   ) {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const seedLanguageSwitch = searchParams.get('seedLanguageSwitch') === '1'
   const [elements, setElements] = useState<LayoutElement[]>(() => getLayoutElements(question.layout))
   const [screenBackground, setScreenBackground] = useState<ScreenBackgroundSettings>(() =>
     getScreenBackgroundSettings(question.layout)
   )
   const [saving, setSaving] = useState(false)
+  const [seedDone, setSeedDone] = useState(false)
 
   const lang =
     languageCode ||
@@ -61,6 +66,15 @@ export const QuestionScreenDesigner = React.forwardRef<QuestionScreenDesignerHan
   useEffect(() => {
     syncFromQuestion()
   }, [question.id, syncFromQuestion])
+
+  useEffect(() => {
+    if (!seedLanguageSwitch || seedDone) return
+    setElements((prev) => {
+      if (layoutHasLanguageSwitch(prev)) return prev
+      return [...prev, createLanguageSwitchElement()]
+    })
+    setSeedDone(true)
+  }, [seedLanguageSwitch, seedDone])
 
   const saveLayout = async (nextElements: LayoutElement[], nextBackground: ScreenBackgroundSettings) => {
     setSaving(true)
@@ -116,6 +130,8 @@ export const QuestionScreenDesigner = React.forwardRef<QuestionScreenDesignerHan
         onQuizFontUpdated={onQuizUpdated}
         onNavigate={goToQuestion}
         showDesignerRail
+        languages={quiz.languages}
+        previewLanguage={lang}
       >
         <AdminDeviceFrame screenBackground={screenBackground} customFont={quiz.custom_font}>
           {elements.length === 0 ? (

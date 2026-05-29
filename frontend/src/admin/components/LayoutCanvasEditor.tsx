@@ -23,7 +23,7 @@ import { CarouselEditorModal } from './CarouselEditorModal'
 import { ElementContentModal } from './ElementContentModal'
 import { ElementPickerModal } from './ElementPickerModal'
 import type { QuestionOptionChoice } from './elementEditorFields'
-import type { QuizBuilderPayload } from '../builderTypes'
+import type { QuizBuilderPayload, QuizLanguage } from '../builderTypes'
 import type { QuizCustomFont } from '../../utils/quizFont'
 import { QuizLayoutFontRoot } from '../../layout/QuizLayoutFontRoot'
 import { LayoutElementInspector, layoutElementStyle } from './LayoutElementInspector'
@@ -47,6 +47,8 @@ type LayoutCanvasEditorProps = {
   customFont?: QuizCustomFont | null
   onQuizFontUpdated?: (quiz: QuizBuilderPayload) => void
   onNavigate?: (target: PreviewTarget) => void
+  languages?: QuizLanguage[]
+  previewLanguage?: string
   /** In editor mode, whether click/tap should execute element actions. */
   allowActionTriggerInEditor?: boolean
   /** Vertical accordion rail to the right of the phone (design page). */
@@ -86,6 +88,8 @@ function LayoutCanvasLayers({
   onMoveStart,
   onResizeStart,
   openElementSetup,
+  languages,
+  previewLanguage,
 }: {
   children: React.ReactNode
   elements: LayoutElement[]
@@ -95,6 +99,8 @@ function LayoutCanvasLayers({
   onMoveStart: (id: string, e: React.PointerEvent) => void
   onResizeStart: (id: string, handle: ResizeHandle, e: React.PointerEvent) => void
   openElementSetup: (el: LayoutElement, isNew: boolean) => void
+  languages?: QuizLanguage[]
+  previewLanguage?: string
 }) {
   return (
     <QuizLayoutFontRoot customFont={customFont} className="admin-layout-canvas-font-root">
@@ -121,7 +127,12 @@ function LayoutCanvasLayers({
                 openElementSetup(el, false)
               }}
             >
-              <LayoutElementView element={el} hasAction={hasAction} />
+              <LayoutElementView
+                element={el}
+                hasAction={hasAction}
+                languages={languages}
+                previewLanguage={previewLanguage}
+              />
               {el.isOption ? (
                 <span className="admin-layout-option-badge" title="Selectable option">
                   Option
@@ -154,6 +165,8 @@ export function LayoutCanvasEditor({
   customFont,
   onQuizFontUpdated,
   onNavigate,
+  languages,
+  previewLanguage,
   allowActionTriggerInEditor = false,
   showDesignerRail = false,
 }: LayoutCanvasEditorProps) {
@@ -492,6 +505,8 @@ export function LayoutCanvasEditor({
                     onMoveStart={handleMoveStart}
                     onResizeStart={handleResizeStart}
                     openElementSetup={openElementSetup}
+                    languages={languages}
+                    previewLanguage={previewLanguage}
                   >
                     {children}
                   </LayoutCanvasLayers>
@@ -525,6 +540,8 @@ export function LayoutCanvasEditor({
                 onMoveStart={handleMoveStart}
                 onResizeStart={handleResizeStart}
                 openElementSetup={openElementSetup}
+                languages={languages}
+                previewLanguage={previewLanguage}
               >
                 {children}
               </LayoutCanvasLayers>

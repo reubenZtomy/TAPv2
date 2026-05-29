@@ -21,6 +21,11 @@ export type QuizLayoutScreenProps = {
   customFont?: QuizCustomFont | null
   base?: React.ReactNode
   onElementAction?: (action: ElementAction, element: LayoutElement) => void
+  languages?: string[]
+  languageLabels?: Record<string, string>
+  selectedLanguage?: string
+  onLanguageChange?: (language: string) => void
+  layoutPreview?: boolean
 }
 
 export function QuizLayoutScreen({
@@ -29,6 +34,11 @@ export function QuizLayoutScreen({
   customFont,
   base,
   onElementAction,
+  languages = [],
+  languageLabels,
+  selectedLanguage = '',
+  onLanguageChange,
+  layoutPreview = false,
 }: QuizLayoutScreenProps) {
   const normalized = Array.isArray(elements) ? elements : getLayoutElements(elements)
   const layoutRecord = elements && !Array.isArray(elements) ? elements : undefined
@@ -64,7 +74,9 @@ export function QuizLayoutScreen({
           {normalized.map((el) => {
             const hasAction = Boolean(el.action?.type && el.action.type !== 'none')
             const isOption = Boolean(el.isOption)
-            const interactive = (hasAction || isOption) && supportsActions(el.type)
+            const isLanguageSwitch = el.type === 'language_switch'
+            const interactive =
+              (hasAction || isOption) && supportsActions(el.type) && !isLanguageSwitch
             return (
               <div
                 key={el.id}
@@ -98,7 +110,14 @@ export function QuizLayoutScreen({
                 role={interactive ? 'button' : undefined}
                 tabIndex={interactive ? 0 : undefined}
               >
-                <RuntimeLayoutElement element={el} />
+                <RuntimeLayoutElement
+                  element={el}
+                  languages={languages}
+                  languageLabels={languageLabels}
+                  selectedLanguage={selectedLanguage}
+                  onLanguageChange={onLanguageChange}
+                  preview={layoutPreview}
+                />
               </div>
             )
           })}
