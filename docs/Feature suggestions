@@ -1,0 +1,59 @@
+---
+
+## Feature Recommendations (Below are the features suggested AI has been used to properly word ideas)
+
+### 1. Dashboard and Reporting
+
+Since quiz responses are already being recorded, the dashboard can be expanded to provide better visibility into quiz performance and user outcomes.
+
+A dashboard table can display all quizzes available in the system, with options to generate reports for each quiz. In addition to Excel report downloads, each quiz can have a dedicated statistics view showing summary cards, response trends, total responses received, common outcomes, and key performance insights.
+
+This would help the client review quiz activity quickly without manually analysing exported data.
+
+---
+
+### 2. Quiz Design and Logic Visualisation
+
+The quiz design interface can be enhanced with additional input options to make quiz creation more flexible. The carousel input design can also be improved to provide a smoother and more user-friendly experience.
+
+A visual tree tab can be added within each quiz. This would display the custom logic flow, showing which answers lead to each branch or outcome. This feature would make it easier to understand quiz logic during presentations, internal reviews, or client calls, instead of manually selecting different answers to test each condition.
+
+---
+
+### 3. Multi-Language Support
+
+Although language support was implemented in the V1 quiz, it has not been included in the current version by design. This can be introduced as a future enhancement.
+
+One option is to integrate Google Translate, allowing administrators to add a new language from a language tab and place a language selection dropdown on the quiz screen. This would allow the quiz to support multiple languages more quickly.
+
+Alternatively, the system can support uploaded translation text files for cases where direct one-to-one translation may miss context or tone. This would give the client more control over translation accuracy while still keeping the system scalable for multiple languages.
+
+---
+
+### 4. Funnel Analytics
+
+The reporting section can be extended to provide a funnel view of each quiz, showing how users progress through the quiz and where they drop off.
+
+For example, administrators could view statistics such as the number of users who started the quiz, reached each question, and ultimately completed it. This would make it easy to identify specific questions or sections that cause users to abandon the quiz.
+
+By understanding user behaviour throughout the quiz journey, administrators can optimise question wording, page design, and quiz structure to improve completion rates and overall engagement.
+
+---
+
+### 5. Response Segmentation and Filtering
+
+As response data grows, administrators may benefit from advanced filtering and segmentation capabilities within the reporting dashboard.
+
+Responses could be filtered by criteria such as date range, language, outcome received, device type, country, or traffic source. This would allow more detailed analysis of how different user groups interact with quizzes and whether certain audiences produce different outcomes.
+
+These insights can support better decision-making, improve marketing effectiveness, and help identify trends that may not be visible in overall statistics.
+
+---
+
+### 6. Reusable Question Bank
+
+A centralised question bank can be introduced to allow administrators to create and manage commonly used questions in a single location.
+
+Instead of recreating the same question across multiple quizzes, administrators could select existing questions from the question bank and insert them into new or existing quizzes. Any standard questions, such as demographic or qualification questions, could be reused consistently throughout the platform.
+
+This would reduce duplication, improve maintenance, ensure consistency across quizzes, and significantly speed up the quiz creation process for administrators managing multiple quizzes.
