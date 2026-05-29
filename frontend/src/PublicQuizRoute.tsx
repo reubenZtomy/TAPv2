@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import App from './App'
+import { PublicQuizApp } from './PublicQuizApp'
 import { QuizUnavailableScreen } from './screens/QuizUnavailableScreen'
 import type { IntroLayout } from './admin/layoutTypes'
 import type { QuizContent } from './types/quizContent'
@@ -69,5 +69,5 @@ export function PublicQuizRoute() {
     )
   }
 
-  return <App publicQuiz={payload} />
+  return <PublicQuizApp publicQuiz={payload} />
 }

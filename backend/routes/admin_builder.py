@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 from auth_utils import admin_required
 from database import get_connection, row_to_dict
 from quiz_builder_constants import LAYOUT_TYPES, default_layout_json
-from quiz_builder_service import load_quiz_builder, seed_tap_template_from_file, validate_publish
+from quiz_builder_service import load_quiz_builder, validate_publish
 from quiz_font_service import delete_quiz_font, save_quiz_font
 from quiz_layout_presets import get_layout_preset, list_layout_presets
 
@@ -218,20 +218,6 @@ def save_draft_quiz(admin_user, quiz_id):
         )
     payload = load_quiz_builder(quiz_id)
     return jsonify({'quiz': payload, 'message': 'Draft saved'})
-
-
-@admin_builder_bp.route('/quizzes/<int:quiz_id>/seed-tap-template', methods=['POST'])
-@admin_required
-def seed_tap_template(admin_user, quiz_id):
-    questions_dir = current_app.config.get('QUESTIONS_DIR')
-    if not questions_dir:
-        import os
-        questions_dir = os.path.join(os.path.dirname(current_app.root_path), 'questions')
-    count, err = seed_tap_template_from_file(quiz_id, questions_dir)
-    if err:
-        return jsonify({'error': err}), 400
-    payload = load_quiz_builder(quiz_id)
-    return jsonify({'quiz': payload, 'questions_created': count})
 
 
 @admin_builder_bp.route('/quizzes/<int:quiz_id>/languages', methods=['POST'])

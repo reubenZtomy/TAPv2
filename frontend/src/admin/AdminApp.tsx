@@ -18,6 +18,7 @@ import { AdminResultScreenDesignPage } from './pages/AdminResultScreenDesignPage
 import { AdminThemeProvider } from './AdminThemeContext'
 
 import './admin.css'
+import './admin-responsive.css'
 
 
 

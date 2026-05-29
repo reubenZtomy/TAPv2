@@ -65,73 +65,50 @@ export function AdminLoginPage({ onLoggedIn }: AdminLoginPageProps) {
 
 
   return (
-
     <div className="admin-login-wrap">
-
       <div className="admin-login-topbar">
-
         <AdminThemeToggle theme={theme} onToggle={toggleTheme} />
-
       </div>
 
-      <form className="admin-login-form" onSubmit={handleSubmit}>
+      <div className="admin-login-inner">
+        <form className="admin-login-form" onSubmit={handleSubmit}>
+          <h1 className="admin-page-title">Admin login</h1>
+          <p className="admin-login-subtitle">Sign in to manage quizzes and content.</p>
 
-        <h1 className="admin-page-title">Admin login</h1>
+          {error && <p className="admin-error" role="alert">{error}</p>}
 
-        {error && <p className="admin-error">{error}</p>}
+          <label htmlFor="admin-email">Email</label>
+          <input
+            id="admin-email"
+            className="admin-input"
+            type="email"
+            autoComplete="username"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-        <label htmlFor="admin-email">Email</label>
+          <label htmlFor="admin-password">Password</label>
+          <input
+            id="admin-password"
+            className="admin-input"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
-        <input
+          <button type="submit" className="admin-btn admin-btn--block" disabled={loading}>
+            {loading ? 'Signing in…' : 'Sign in'}
+          </button>
 
-          id="admin-email"
-
-          className="admin-input"
-
-          type="email"
-
-          value={email}
-
-          onChange={(e) => setEmail(e.target.value)}
-
-          required
-
-        />
-
-        <label htmlFor="admin-password">Password</label>
-
-        <input
-
-          id="admin-password"
-
-          className="admin-input"
-
-          type="password"
-
-          value={password}
-
-          onChange={(e) => setPassword(e.target.value)}
-
-          required
-
-        />
-
-        <button type="submit" className="admin-btn" disabled={loading}>
-
-          {loading ? 'Signing in…' : 'Sign in'}
-
-        </button>
-
-        <Link to="/" className="admin-link-back">
-
-          ← Back to quiz app
-
-        </Link>
-
-      </form>
-
+          <Link to="/admin/dashboard" className="admin-link-back admin-login-back-link">
+            ← Admin dashboard
+          </Link>
+        </form>
+      </div>
     </div>
-
   )
 
 }

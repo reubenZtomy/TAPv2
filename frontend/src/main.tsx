@@ -1,7 +1,6 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import App from './App'
 import { AdminApp } from './admin/AdminApp'
 import { PublicQuizRoute } from './PublicQuizRoute'
 import './main.css'
@@ -16,7 +15,7 @@ root.render(
       <Routes>
         <Route path="/admin/*" element={<AdminApp />} />
         <Route path="/q/:slug" element={<PublicQuizRoute />} />
-        <Route path="/*" element={<App />} />
+        <Route path="*" element={<Navigate to="/admin/login" replace />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>

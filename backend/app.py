@@ -2,10 +2,8 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
-from result_engine import ResultEngine
 import datetime
 import os
-import json
 
 from database import get_connection, init_db, row_to_dict
 from auth_utils import create_token, verify_token, get_bearer_token, get_user_by_id
@@ -25,10 +23,6 @@ app = Flask(__name__, static_folder=static_dir)
 CORS(app)
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_secret_key_change_me')
-questions_dir = os.path.join(os.path.dirname(__file__), 'questions')
-app.config['QUESTIONS_DIR'] = questions_dir
-
-result_engine = ResultEngine()
 
 app.register_blueprint(admin_quizzes_bp)
 app.register_blueprint(admin_preferences_bp)
@@ -97,77 +91,9 @@ def _maybe_seed_admin():
         )
 
 
-def parse_language_file(path):
-    with open(path, 'r', encoding='utf-8') as file:
-        raw = file.read().strip()
-    if not raw:
-        raise ValueError('Language file is empty')
-    try:
-        parsed = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f'Invalid JSON: {exc.msg}') from exc
-    if not isinstance(parsed, dict):
-        raise ValueError('Language file root must be an object')
-    return parsed
-
-
-def list_language_files():
-    if not os.path.isdir(questions_dir):
-        return []
-    languages = []
-    for filename in os.listdir(questions_dir):
-        file_path = os.path.join(questions_dir, filename)
-        if not os.path.isfile(file_path):
-            continue
-        language_name, extension = os.path.splitext(filename)
-        if extension.lower() != '.txt':
-            continue
-        if not language_name.strip():
-            continue
-        languages.append(language_name.strip())
-    return sorted(languages)
-
-
 @app.route('/api/hello')
 def hello():
-    return jsonify({'message': 'Hello from Flask backend'})
-
-
-@app.route('/api/auth/register', methods=['POST'])
-def register():
-    data = request.get_json(force=True, silent=True) or {}
-
-    email = (data.get('email') or '').strip().lower()
-    name = (data.get('name') or '').strip()
-    password = data.get('password') or ''
-
-    if not email or not name or not password:
-        return jsonify({'error': 'Missing required fields'}), 400
-
-    try:
-        with get_connection() as conn:
-            conn.execute(
-                """
-                INSERT INTO users (email, name, password_hash, created_at, role)
-                VALUES (?, ?, ?, ?, 'student')
-                """,
-                (
-                    email,
-                    name,
-                    generate_password_hash(password),
-                    datetime.datetime.utcnow().isoformat(),
-                ),
-            )
-            row = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
-    except Exception as exc:
-        if 'UNIQUE' in str(exc):
-            return jsonify({'error': 'Email already registered'}), 409
-        raise
-
-    user = row_to_dict(row)
-    token = create_token(user['id'], email, user['role'])
-
-    return jsonify({'token': token, 'user': _user_public(user)}), 201
+    return jsonify({'message': 'TAP admin API'})
 
 
 @app.route('/api/auth/login', methods=['POST'])
@@ -238,43 +164,13 @@ def me():
     return jsonify({'user': _user_public(user)})
 
 
-@app.route('/api/questions/languages', methods=['GET'])
-def get_languages():
-    languages = list_language_files()
-    return jsonify({'languages': languages})
-
-
-@app.route('/api/questions/<language>', methods=['GET'])
-def get_language_questions(language):
-    sanitized_language = (language or '').strip()
-    if not sanitized_language:
-        return jsonify({'error': 'Language is required'}), 400
-    filename = f'{sanitized_language}.txt'
-    file_path = os.path.join(questions_dir, filename)
-    if not os.path.isfile(file_path):
-        return jsonify({'error': 'Language file not found'}), 404
-    try:
-        content = parse_language_file(file_path)
-    except ValueError as exc:
-        return jsonify({'error': f'Invalid language file: {str(exc)}'}), 400
-    return jsonify({'language': sanitized_language, 'content': content})
-
-
-@app.route('/api/generate-result', methods=['POST'])
-def generate_result():
-    user_answers = request.get_json(force=True, silent=True) or {}
-
-    if not user_answers:
-        return jsonify({'error': 'No quiz answers received'}), 400
-
-    result, status_code = result_engine.generate(user_answers)
-    return jsonify(result), status_code
-
-
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
     static_folder = app.static_folder
+
+    if path.startswith('api/'):
+        return jsonify({'error': 'Not found'}), 404
 
     if path != '' and os.path.exists(os.path.join(static_folder, path)):
         return send_from_directory(static_folder, path)
@@ -285,7 +181,7 @@ def serve(path):
         return send_from_directory(static_folder, 'index.html')
 
     return jsonify({
-        'message': 'Frontend not built. Run frontend in dev mode or build it.'
+        'message': 'Frontend not built. Run the Vite dev server or build frontend/dist.',
     }), 200
 
 

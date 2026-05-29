@@ -35,7 +35,7 @@ import { AdminQuizLinksPanel } from '../components/AdminQuizLinksPanel'
 import {
   questionDisplayName,
 } from '../builderDisplay'
-import { TAP_REQUIRED_KEYS, type QuizBuilderPayload } from '../builderTypes'
+import type { QuizBuilderPayload } from '../builderTypes'
 
 const BUILDER_TABS: AdminBuilderTab[] = ['questions', 'answers', 'languages', 'settings', 'links']
 
@@ -70,7 +70,7 @@ export function AdminQuizBuilderPage() {
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null)
   const [editLang, setEditLang] = useState('English')
 
-  const [details, setDetails] = useState({ name: '', description: '', result_engine_type: 'tap_personality' })
+  const [details, setDetails] = useState({ name: '', description: '' })
   const [newLangCode, setNewLangCode] = useState('')
   const [newLangName, setNewLangName] = useState('')
   const [addQuestionOpen, setAddQuestionOpen] = useState(false)
@@ -104,7 +104,6 @@ export function AdminQuizBuilderPage() {
       setDetails({
         name: data.quiz.name,
         description: data.quiz.description || '',
-        result_engine_type: data.quiz.result_engine_type,
       })
       const defaultLang =
         data.quiz.languages.find((l) => l.is_default)?.language_code ||
@@ -169,7 +168,6 @@ export function AdminQuizBuilderPage() {
       const res = await updateQuiz(quizId, {
         name: details.name,
         description: details.description,
-        result_engine_type: details.result_engine_type,
       } as Parameters<typeof updateQuiz>[1])
       await load()
       setMessage('Quiz details saved')
@@ -700,32 +698,13 @@ export function AdminQuizBuilderPage() {
               value={details.description}
               onChange={(e) => setDetails((d) => ({ ...d, description: e.target.value }))}
             />
-            <label>Result engine</label>
-            <select
-              className="admin-select"
-              value={details.result_engine_type}
-              onChange={(e) => setDetails((d) => ({ ...d, result_engine_type: e.target.value }))}
-            >
-              <option value="tap_personality">TAP personality (Groq)</option>
-              <option value="static">Static (future)</option>
-            </select>
+            <p className="admin-muted" style={{ marginTop: 8 }}>
+              Configure result screens on the <strong>Answers</strong> tab. Students see those results when they
+              finish a published quiz at your public link.
+            </p>
             <button type="button" className="admin-btn" style={{ marginTop: 12 }} onClick={() => void handleSaveDetails()}>
               Save details
             </button>
-          </section>
-
-          <section className="admin-panel admin-builder-tab-panel">
-            <h2 className="admin-section-title">TAP required keys</h2>
-            <p className="admin-muted">
-              {TAP_REQUIRED_KEYS.map((key) => {
-                const ok = quiz.questions.some((q) => q.question_key === key)
-                return (
-                  <span key={key} className={`admin-key-chip ${ok ? 'ok' : 'missing'}`}>
-                    {key}
-                  </span>
-                )
-              })}
-            </p>
           </section>
         </div>
         </div>

@@ -123,7 +123,7 @@ try {
     Write-Host "  TAP V2 is running" -ForegroundColor White
     Write-Host "================================================================================" -ForegroundColor White
     Write-Host ""
-    Write-Host "  Student quiz (public)"
+    Write-Host "  Example public quiz (after publish + link)"
     Write-Host "    $PublicQuizUrl"
     Write-Host ""
     Write-Host "  Admin dashboard"

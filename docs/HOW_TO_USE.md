@@ -146,7 +146,7 @@ You need at least one language before you can publish.
 
 ## 7. Map answers to custom results (optional)
 
-Use this if you want specific result screens based on which options the student picked. If you use the default **TAP personality (Groq)** engine only, you can skip this section and rely on AI-generated results (requires `GROQ_API_KEY` in `backend/.env`).
+Use this to define which result screen students see based on the options they selected on each question.
 
 1. Open the **Answers** tab.
 2. Click **+ Add result**.
@@ -172,8 +172,6 @@ If you use custom results, every question that has selectable options should app
 Open the **Settings** tab to update:
 
 - **Name** and **description**
-- **Result engine** — `TAP personality (Groq)` uses the AI result pipeline; `Static` is reserved for future use
-- **TAP required keys** — reference chips (`passion`, `partner`, `treasure`, etc.) if you align with the standard TAP personality quiz structure
 
 Click **Save details** after changes.
 
@@ -276,7 +274,6 @@ This is separate from **Save draft**, which marks the quiz as a work-in-progress
 | Publish blocked: answers need remapping | Open **Answers**, edit rules with warnings, update conditions to match current questions/options. |
 | Public link shows “unavailable” | Publish the quiz, set link to **active**, and ensure the quiz **Active** toggle is on. |
 | Admin login fails | Check `backend/.env` for `ADMIN_EMAIL` / `ADMIN_PASSWORD`; restart the backend. |
-| No AI personality text | Add `GROQ_API_KEY` to `backend/.env` and restart Flask. |
 | Custom results missing on another PC | Answer rules are in browser storage; rebuild on that machine or plan a future server-side export. |
 | Changes not visible on public quiz | Hard-refresh the student page; confirm you published after saving layouts. |
 

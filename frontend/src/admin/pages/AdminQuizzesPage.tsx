@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { NewQuizModal } from '../components/NewQuizModal'
+import { QuizShareCell } from '../components/QuizShareCell'
 import {
   createQuiz,
   deleteQuiz,
@@ -107,6 +108,7 @@ export function AdminQuizzesPage() {
   const [togglingId, setTogglingId] = useState<number | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
+  const [shareMessage, setShareMessage] = useState('')
 
   const isSystemQuiz = (quiz: QuizRecord) => quiz.quiz_uuid === 'tap-system-default'
 
@@ -204,6 +206,7 @@ export function AdminQuizzesPage() {
       </header>
 
       {error && <p className="admin-error admin-page-error">{error}</p>}
+      {shareMessage && <p className="admin-builder-message admin-muted">{shareMessage}</p>}
 
       <section className="admin-panel" aria-label="Quiz list">
         <div className="admin-panel-toolbar">
@@ -245,6 +248,7 @@ export function AdminQuizzesPage() {
                   <th>Active</th>
                   <th>Language</th>
                   <th>Submissions</th>
+                  <th>Share</th>
                   <th>Updated</th>
                   <th>ACTION</th>
                 </tr>
@@ -282,6 +286,15 @@ export function AdminQuizzesPage() {
                     </td>
                     <td>{quiz.default_language}</td>
                     <td>{quiz.submission_count ?? 0}</td>
+                    <td>
+                      <QuizShareCell
+                        quiz={quiz}
+                        onCopied={() => {
+                          setShareMessage(`Copied link for “${quiz.name}”.`)
+                          window.setTimeout(() => setShareMessage(''), 2500)
+                        }}
+                      />
+                    </td>
                     <td>{new Date(quiz.updated_at).toLocaleString()}</td>
                     <td>
                       <div className="admin-table-actions">

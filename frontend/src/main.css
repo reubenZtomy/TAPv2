@@ -2106,3 +2106,63 @@ button.personality-result-action:active {
   border-color: #f2a25c;
   background: rgba(242, 162, 92, 0.25);
 }
+
+/* —— Global responsive (public quiz + shared) —— */
+@media (max-width: 480px) {
+  html,
+  body {
+    font-size: clamp(18px, 4.5vw, 24px);
+  }
+
+  .app-root,
+  .app-layout {
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+
+  .quiz-unavailable-screen {
+    padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+      max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+
+  .quiz-unavailable-screen h1 {
+    font-size: clamp(1.5rem, 6vw, 2rem);
+  }
+
+  .device-frame-outer {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+@media (max-width: 420px) {
+  .adventure-footer .btn,
+  .treasure-footer .btn,
+  .passion-footer .btn,
+  .partner-footer .btn,
+  .fun-footer .btn,
+  .basecamp-footer .btn,
+  .recharge-footer .btn,
+  .graduation-footer .btn {
+    width: min(100%, 256px);
+    max-width: 100%;
+  }
+
+  .dynamic-question-option {
+    font-size: clamp(16px, 4vw, 20px);
+    padding: 12px 14px;
+  }
+}
+
+/* Full-bleed phone on very small viewports */
+@media (max-width: 420px) {
+  .device-frame-outer {
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  .device-frame {
+    border-radius: 0;
+    box-shadow: none;
+  }
+}

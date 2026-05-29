@@ -110,7 +110,7 @@ echo -e "${BOLD}================================================================
 echo -e "${BOLD}  TAP V2 is running${NC}"
 echo -e "${BOLD}================================================================================${NC}"
 echo ""
-echo -e "  ${BOLD}Student quiz (public)${NC}"
+echo -e "  ${BOLD}Example public quiz (after you publish & create a link)${NC}"
 echo "    $PUBLIC_QUIZ_URL"
 echo ""
 echo -e "  ${BOLD}Admin dashboard${NC}"

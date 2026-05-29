@@ -48,6 +48,7 @@ export type QuizRecord = {
   created_at: string
   updated_at: string
   submission_count?: number
+  share_slug?: string | null
   custom_font?: QuizCustomFont | null
 }
 
@@ -187,13 +188,6 @@ export function saveQuizDraft(quizId: number) {
   return adminFetch(`/api/admin/quizzes/${quizId}/draft`, { method: 'POST' }) as Promise<{
     quiz: QuizBuilderPayload
     message: string
-  }>
-}
-
-export function seedTapTemplate(quizId: number) {
-  return adminFetch(`/api/admin/quizzes/${quizId}/seed-tap-template`, { method: 'POST' }) as Promise<{
-    quiz: QuizBuilderPayload
-    questions_created: number
   }>
 }
 

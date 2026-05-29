@@ -95,31 +95,18 @@ def test_add_language_to_quiz(client):
     assert 'Chinese' in codes
 
 
-def test_publish_requires_tap_keys(client):
+def test_publish_requires_at_least_one_question(client):
     created = client.post(
         '/api/admin/quizzes',
         headers=admin_headers(client),
-        json={'name': 'Publish Fail Quiz', 'result_engine_type': 'tap_personality'},
+        json={'name': 'Publish Fail Quiz'},
     ).get_json()
     quiz_id = created['quiz']['id']
+    client.post(
+        f'/api/admin/quizzes/{quiz_id}/languages',
+        headers=admin_headers(client),
+        json={'language_code': 'English', 'language_name': 'English'},
+    )
     res = client.post(f'/api/admin/quizzes/{quiz_id}/publish', headers=admin_headers(client))
     assert res.status_code == 400
-    assert 'missing_question_keys' in res.get_json() or res.get_json().get('error')
-
-
-def test_seed_tap_template_and_publish(client):
-    created = client.post(
-        '/api/admin/quizzes',
-        headers=admin_headers(client),
-        json={'name': 'TAP Seed Quiz', 'result_engine_type': 'tap_personality'},
-    ).get_json()
-    quiz_id = created['quiz']['id']
-    headers = admin_headers(client)
-
-    seed = client.post(f'/api/admin/quizzes/{quiz_id}/seed-tap-template', headers=headers)
-    assert seed.status_code == 200
-    assert seed.get_json()['questions_created'] == 8
-
-    pub = client.post(f'/api/admin/quizzes/{quiz_id}/publish', headers=headers)
-    assert pub.status_code == 200
-    assert pub.get_json()['quiz']['status'] == 'active'
+    assert res.get_json().get('error')

@@ -1432,6 +1432,12 @@ a.admin-btn--design {
   cursor: not-allowed;
 }
 
+.admin-btn--block {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .admin-table-wrap {
   overflow-x: auto;
 }
@@ -1710,6 +1716,83 @@ a.admin-btn--design {
   color: #f87171;
 }
 
+.admin-share-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.admin-share-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: inherit;
+}
+
+.admin-share-state--muted {
+  color: var(--admin-text-muted);
+  font-weight: 500;
+}
+
+.admin-share-set-link {
+  font-size: inherit;
+  font-weight: 500;
+  color: var(--admin-link);
+  text-decoration: none;
+}
+
+.admin-share-set-link:hover {
+  text-decoration: underline;
+}
+
+.admin-share-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface-muted);
+  color: var(--admin-text);
+  font-size: inherit;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.admin-share-copy-btn:hover {
+  border-color: var(--admin-primary);
+  color: var(--admin-primary);
+  background: var(--admin-primary-muted);
+}
+
+.admin-share-copy-btn.is-copied {
+  border-color: var(--admin-success);
+  color: var(--admin-success);
+  background: rgba(22, 163, 74, 0.1);
+}
+
+.admin-share-copy-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.admin-share-copy-label {
+  line-height: 1;
+}
+
+.admin-share-internal-hint {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--admin-warning);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .admin-table-active-cell {
   display: inline-flex;
   align-items: center;
@@ -1783,33 +1866,64 @@ a.admin-btn--design {
   min-height: 100vh;
   min-height: 100svh;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   justify-content: center;
-  padding: 24px;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   background: var(--admin-bg);
   position: relative;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 
 .admin-login-topbar {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 2;
+}
+
+.admin-login-inner {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding-top: 48px;
+  padding-bottom: 24px;
 }
 
 .admin-login-form {
   width: 100%;
-  max-width: 400px;
   background: var(--admin-surface);
-  padding: 32px;
+  padding: clamp(20px, 5vw, 32px);
   border-radius: 14px;
   border: 1px solid var(--admin-border);
-  box-shadow: var(--admin-shadow);
+  box-shadow: var(--admin-shadow-lg);
   color: var(--admin-text);
 }
 
 .admin-login-form .admin-page-title {
-  margin-bottom: 24px;
+  margin-bottom: 8px;
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
+}
+
+.admin-login-subtitle {
+  margin: 0 0 20px;
+  font-size: inherit;
+  line-height: 1.4;
+  color: var(--admin-text-muted);
+}
+
+.admin-login-form .admin-btn--block {
+  width: 100%;
+  margin-top: 4px;
+  min-height: 44px;
+}
+
+.admin-login-back-link {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
 }
 
 .admin-login-form label {

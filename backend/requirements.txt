@@ -2,7 +2,4 @@ Flask
 flask-cors
 PyJWT
 python-dotenv
-requests
-pandas
-openpyxl
 pytest

@@ -40,7 +40,7 @@ def create_quiz(admin_user):
 
     default_language = (body.get('default_language') or 'English').strip()
     allow_language_selection = 1 if body.get('allow_language_selection', True) else 0
-    result_engine_type = (body.get('result_engine_type') or 'tap_personality').strip()
+    result_engine_type = (body.get('result_engine_type') or 'custom').strip()
     now = _utc_now()
 
     with get_connection() as conn:
@@ -109,7 +109,13 @@ def list_quizzes(admin_user):
         rows = conn.execute(
             f"""
             SELECT q.*,
-                   (SELECT COUNT(*) FROM quiz_submissions s WHERE s.quiz_id = q.id) AS submission_count
+                   (SELECT COUNT(*) FROM quiz_submissions s WHERE s.quiz_id = q.id) AS submission_count,
+                   (
+                     SELECT slug FROM quiz_links
+                     WHERE quiz_id = q.id
+                     ORDER BY CASE WHEN status = 'active' THEN 0 ELSE 1 END, created_at ASC
+                     LIMIT 1
+                   ) AS share_slug
             FROM quizzes q
             {where_sql}
             {order_sql}
@@ -122,6 +128,7 @@ def list_quizzes(admin_user):
     for row in rows:
         item = _quiz_row_to_api(row)
         item['submission_count'] = row['submission_count']
+        item['share_slug'] = row['share_slug']
         quizzes.append(item)
 
     return jsonify({

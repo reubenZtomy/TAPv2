@@ -84,7 +84,7 @@ def _create_admin_tables(cursor):
             created_by INTEGER NOT NULL,
             default_language TEXT DEFAULT 'English',
             allow_language_selection INTEGER DEFAULT 1,
-            result_engine_type TEXT DEFAULT 'tap_personality',
+            result_engine_type TEXT DEFAULT 'custom',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(created_by) REFERENCES users(id)
@@ -265,7 +265,7 @@ def _seed_default_quiz(cursor):
             created_by,
             'English',
             1,
-            'tap_personality',
+            'custom',
             now,
             now,
         ),
