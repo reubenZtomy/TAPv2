@@ -1,4 +1,4 @@
-# TAP V2 — How to use the admin quiz builder
+<img width="1914" height="930" alt="image" src="https://github.com/user-attachments/assets/c0d75363-6598-4747-827d-c54282b62e72" /># TAP V2 — How to use the admin quiz builder
 
 This guide walks through creating a quiz, designing question screens, mapping answers to results, and publishing a public link for students.
 
@@ -37,7 +37,8 @@ This guide walks through creating a quiz, designing question screens, mapping an
 3. After login you land on the **Dashboard**. Use the sidebar **Quizzes** to manage quizzes.
 
 <!-- Add screenshot: docs/images/01-admin-login.png -->
-![Admin login screen](images/01-admin-login.png)
+<img width="1914" height="930" alt="image" src="https://github.com/user-attachments/assets/8c92e779-aa2b-40b2-b945-a7e58bfa6b58" />
+
 
 ---
 
