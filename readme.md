@@ -4,6 +4,8 @@ This is the project for Student personality assesment application
 
 This codebase is published as **TAP V2** at [https://github.com/reubenZtomy/TAPv2](https://github.com/reubenZtomy/TAPv2.git). It is separate from the original client repository ([TAP](https://github.com/reubenZtomy/TAP)).
 
+**How to create and publish a quiz:** See **[docs/HOW_TO_USE.md](docs/HOW_TO_USE.md)** — step-by-step guide for the admin builder (create quiz, design questions, map answers, publish, and share public links). Add screenshots under `docs/images/` when ready.
+
 ## Client quick start (one-time setup)
 
 Use the setup script for your operating system. Each script runs **once** (or whenever you want a fresh install): it creates a Python virtual environment, installs backend and frontend dependencies, creates `backend/.env` from the template if missing, starts both servers, and prints the URLs and admin login in the terminal.
