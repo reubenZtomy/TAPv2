@@ -1,10 +1,8 @@
-<img width="1914" height="930" alt="image" src="https://github.com/user-attachments/assets/c0d75363-6598-4747-827d-c54282b62e72" /># TAP V2 — How to use the admin quiz builder
+# TAP V2 — How to use the admin quiz builder
 
-This guide walks through creating a quiz, designing question screens, mapping answers to results, and publishing a public link for students.
+This guide walks through creating a quiz, designing question screens, adding translations, mapping answers to results, and publishing a public link for students.
 
 **Before you start:** run the one-time setup from the main [README](../readme.md) (macOS or Windows script). You need the admin app running at http://localhost:5173.
-
-**Screenshots:** Image placeholders are included below. After you clone the repo, add your screenshots under `docs/images/` using the filenames shown (or update the paths in this file).
 
 ---
 
@@ -13,9 +11,9 @@ This guide walks through creating a quiz, designing question screens, mapping an
 1. [Sign in to the admin dashboard](#1-sign-in-to-the-admin-dashboard)
 2. [Create a new quiz](#2-create-a-new-quiz)
 3. [Open the quiz builder](#3-open-the-quiz-builder)
-4. [Add a language](#4-add-a-language)
-5. [Add questions and set order](#5-add-questions-and-set-order)
-6. [Design each question screen](#6-design-each-question-screen)
+4. [Add questions and set order](#4-add-questions-and-set-order)
+5. [Design each question screen](#5-design-each-question-screen)
+6. [Add languages and translations](#6-add-languages-and-translations)
 7. [Map answers to custom results (optional)](#7-map-answers-to-custom-results-optional)
 8. [Quiz settings](#8-quiz-settings)
 9. [Save your work](#9-save-your-work)
@@ -36,10 +34,6 @@ This guide walks through creating a quiz, designing question screens, mapping an
 
 3. After login you land on the **Dashboard**. Use the sidebar **Quizzes** to manage quizzes.
 
-<!-- Add screenshot: docs/images/01-admin-login.png -->
-<img width="1914" height="930" alt="image" src="https://github.com/user-attachments/assets/8c92e779-aa2b-40b2-b945-a7e58bfa6b58" />
-
-
 ---
 
 ## 2. Create a new quiz
@@ -49,8 +43,7 @@ This guide walks through creating a quiz, designing question screens, mapping an
 3. Enter a **quiz name** (for example, `Spring 2026 intake`) and click **Create quiz**.
 4. You are taken straight into the **quiz builder** for that quiz.
 
-<!-- Add screenshot: docs/images/02-new-quiz.png -->
-![New quiz dialog and quizzes list](images/02-new-quiz.png)
+New quizzes start with a default language (usually **English**). You need at least one language and one question before you can publish.
 
 ---
 
@@ -65,35 +58,18 @@ The builder has five tabs:
 | Tab | Purpose |
 |-----|---------|
 | **Questions** | Add screens, reorder flow, open the screen designer |
-| **Answers** | Map student choices to custom result outcomes (optional) |
-| **Languages** | Add languages for translations |
-| **Settings** | Quiz name, description, result engine |
+| **Answers** | Map student choices (and language) to custom result outcomes (optional) |
+| **Languages** | Download translation files, upload new languages, place the language switcher |
+| **Settings** | Quiz name and description |
 | **Links** | Create and manage public student URLs |
 
 At the top you also have **Save draft**, **Publish**, and the **Public URL** bar (slug).
 
-<!-- Add screenshot: docs/images/03-quiz-builder-overview.png -->
-![Quiz builder overview with tabs](images/03-quiz-builder-overview.png)
+**Recommended build order:** Questions → Design screens → Languages → Answers (optional) → Publish.
 
 ---
 
-## 4. Add a language
-
-You need at least one language before you can publish.
-
-1. Open the **Languages** tab.
-2. Enter a **code** (for example `English`) and optional **display name**.
-3. Click **Add**.
-4. Click a language button to choose which translation you are editing (shown as “Editing: **English**” on the tab).
-
-> **Note:** Adding a language does not create quiz screens by itself. You still add questions on the **Questions** tab.
-
-<!-- Add screenshot: docs/images/04-languages.png -->
-![Languages tab](images/04-languages.png)
-
----
-
-## 5. Add questions and set order
+## 4. Add questions and set order
 
 1. Open the **Questions** tab.
 2. Click **+ Add question**.
@@ -111,12 +87,11 @@ You need at least one language before you can publish.
 | **Duplicate design** | Copy one screen’s layout to another question |
 | **Delete** | Remove the question |
 
-<!-- Add screenshot: docs/images/05-questions-list.png -->
-![Questions list with add and reorder](images/05-questions-list.png)
+> **Before languages:** Add and design your questions first. The **Languages** tab needs question text and options to build a translation file.
 
 ---
 
-## 6. Design each question screen
+## 5. Design each question screen
 
 1. On the **Questions** tab, open **Design** for a question (or go to  
    `/admin/quizzes/{quizId}/builder/design/{questionId}`).
@@ -134,34 +109,106 @@ You need at least one language before you can publish.
 - Use **Save draft** on the builder toolbar to persist quiz status without publishing.
 - Upload images through element settings where supported; assets are stored for the quiz.
 
-<!-- Add screenshot: docs/images/06-question-designer.png -->
-![Question screen designer with canvas and component rail](images/06-question-designer.png)
+---
 
-<!-- Add screenshot: docs/images/07-option-toggle.png -->
-![Inspector showing “Classified as option” toggle](images/07-option-toggle.png)
+## 6. Add languages and translations
+
+Use this when students should take the same quiz in more than one language.
+
+### Before you start
+
+- **Add questions first** — the Languages tab shows a reminder: *Make sure you have added questions before setting language.*
+- Your **default language** (★ on the language card) is the source text used when you download a translation template.
+
+### Download a translation template
+
+1. Open the **Languages** tab.
+2. Click a language button to set the **preview language** (shown as “Editing preview language: **English**”). This is the language whose text is copied into the file.
+3. Under **Translation template**, enter:
+   - **New language code** — e.g. `Chinese` or `Spanish` (must match what you will upload)
+   - **Display name** — optional label shown in the admin UI
+4. Click **Download template from {language}**.
+
+You get a `.txt` file with JSON inside, in the same shape as legacy **`English.txt`**:
+
+```json
+{
+  "title": { "heading": "...", "subtitle": "...", "startButton": "..." },
+  "ui": { "back": "Back", "confirm": "Confirm", ... },
+  "questions": {
+    "passion": {
+      "question": "...",
+      "options": [
+        { "key": "business", "label": "BUSINESS" }
+      ]
+    }
+  }
+}
+```
+
+- Keep all **keys** unchanged (`passion`, `business`, etc.).
+- Replace only the **human-readable text** (headings, questions, option labels, UI strings).
+
+You can also click **Download Quiz JSON** on a language card to export that language’s current content.
+
+### Upload a translated file
+
+1. Enter the **new language code** and **display name** (same as when you downloaded, if the file has no metadata block).
+2. Click **Upload translated JSON** and choose your translated `.txt` / `.json` file.
+3. On success, a dialog appears: **Language successfully added. Please add the language switcher element on your design.**
+4. Click **Place language switch element** (or use the same button on the new language’s card later).
+
+The upload creates the language in the quiz and stores translations for intro text, question titles, option labels, and layout strings where applicable.
+
+### Place the language switcher on the first screen
+
+Students need a control to change language during the quiz.
+
+1. From the success dialog or the language card, click **Place your language switch element**.
+2. The builder opens the **first screen** of the quiz:
+   - **Intro / first screen** designer if you have an intro layout, or
+   - The **first question** screen designer otherwise
+3. A **language dropdown** is added in the centre of the canvas (if one is not already there).
+4. Select it and use the **inspector** to adjust:
+   - Position and size (width and height — the dropdown and options scale with it)
+   - Colours, background, font size, border
+5. Click **Save layout**.
+
+At runtime, when a student picks a language from this dropdown, all translated question text and options update for the rest of the quiz.
+
+### Manage languages
+
+| Action | How |
+|--------|-----|
+| Switch preview language | Click a language button on its card |
+| Remove a language | **×** on the language card |
+| Default language | Marked with ★ (set when the quiz is created) |
 
 ---
 
 ## 7. Map answers to custom results (optional)
 
-Use this to define which result screen students see based on the options they selected on each question.
+Use this to define which result screen students see based on their choices — and optionally which **language** they used.
 
 1. Open the **Answers** tab.
 2. Click **+ Add result**.
 3. Fill in:
    - **Rule name** — internal label
-   - **Result title** / **Result description** — shown on the result screen
-   - **Conditions** — for each rule, pick a **Question** and the **Option** the student must choose
+   - **Result title** / **Result description** — fallback text if the result layout is empty
+   - **Conditions** — for each row, choose:
+     - **Language** — specific language, or **Any language**
+     - **Question** — which screen
+     - **Option** — which answer choice
 4. Click **Save** in the modal.
 5. In the table, use **Design** to lay out that result screen (same canvas editor as questions).
-6. Fix any **⚠** warnings before publishing (they mean a question or option changed and the rule needs updating).
+6. If the quiz has **multiple languages**, open the result designer and use **Design language** to build a **separate result layout per language** when needed.
+7. Fix any **⚠** warnings before publishing (they mean a question, option, or language changed and the rule needs updating).
+
+**Example condition:** Language = `Chinese`, Question = `Passion`, Option = `business` → show the “Business scholar” result screen.
 
 **Important:** Answer rules and result designs are stored in your **browser** (`localStorage`) for this quiz. Use the same computer and browser when building and testing. Clearing site data removes them.
 
 If you use custom results, every question that has selectable options should appear in at least one rule’s conditions before you publish.
-
-<!-- Add screenshot: docs/images/08-answers-tab.png -->
-![Answers tab with result rules](images/08-answers-tab.png)
 
 ---
 
@@ -173,15 +220,12 @@ Open the **Settings** tab to update:
 
 Click **Save details** after changes.
 
-<!-- Add screenshot: docs/images/09-settings.png -->
-![Settings tab](images/09-settings.png)
-
 ---
 
 ## 9. Save your work
 
 - **Save draft** — sets quiz status to `draft` and saves your progress. Safe to use often while building.
-- **Save layout** — on each question or result design screen, saves only that screen’s layout.
+- **Save layout** — on each question, intro, or result design screen, saves only that screen’s layout.
 
 You do not need to publish until the quiz is ready for students.
 
@@ -207,9 +251,6 @@ Publishing makes the quiz **active** in the database so public links can serve i
 
 The **Public URL** bar at the top of the builder shows the live link when a slug exists.
 
-<!-- Add screenshot: docs/images/10-publish-slug.png -->
-![Publish / slug dialog](images/10-publish-slug.png)
-
 ---
 
 ## 11. Manage public links
@@ -227,9 +268,6 @@ Students open:
 
 The quiz must be **published (active)** and the link **active**. Draft or inactive quizzes show an unavailable screen.
 
-<!-- Add screenshot: docs/images/11-public-links.png -->
-![Public quiz links panel](images/11-public-links.png)
-
 ---
 
 ## 12. Share with students and test
@@ -237,6 +275,8 @@ The quiz must be **published (active)** and the link **active**. Draft or inacti
 1. Copy the public URL from the **Links** tab or the **Public URL** bar.
 2. Open it in a new tab (or on your phone on the same network if configured).
 3. Walk through the quiz as a student: intro → questions → result.
+4. If you added extra languages, use the **language dropdown** on the first screen and confirm question text and options change.
+5. If you use **Answers** rules with a language condition, test each language path you configured.
 
 **Quick checklist**
 
@@ -246,10 +286,8 @@ The quiz must be **published (active)** and the link **active**. Draft or inacti
 | Link status | `active` |
 | Questions | All screens designed and saved |
 | Options | Tappable choices marked as options |
+| Languages | Template uploaded; language switcher placed and saved |
 | Custom results | Rules valid if you use the Answers tab |
-
-<!-- Add screenshot: docs/images/12-student-quiz.png -->
-![Student-facing public quiz](images/12-student-quiz.png)
 
 ---
 
@@ -269,9 +307,13 @@ This is separate from **Save draft**, which marks the quiz as a work-in-progress
 | Problem | What to try |
 |---------|-------------|
 | Cannot publish | Add at least one language and one question. Fix ⚠ on the **Answers** tab if you use custom results. |
-| Publish blocked: answers need remapping | Open **Answers**, edit rules with warnings, update conditions to match current questions/options. |
+| Publish blocked: answers need remapping | Open **Answers**, edit rules with warnings, update conditions to match current questions/options/languages. |
 | Public link shows “unavailable” | Publish the quiz, set link to **active**, and ensure the quiz **Active** toggle is on. |
 | Admin login fails | Check `backend/.env` for `ADMIN_EMAIL` / `ADMIN_PASSWORD`; restart the backend. |
+| Cannot download/upload language file | Add questions first; enter a **new language code** before download or upload. |
+| Upload fails: missing language code | Set **New language code** in the Languages tab before uploading, unless the file includes `_language.target_language`. |
+| Language switcher does nothing | Save the layout after placing the switcher; publish the quiz; hard-refresh the public quiz page. |
+| Translations missing on one screen | Re-upload the translation file; ensure question keys in the file match your quiz (`question_key` values). |
 | Custom results missing on another PC | Answer rules are in browser storage; rebuild on that machine or plan a future server-side export. |
 | Changes not visible on public quiz | Hard-refresh the student page; confirm you published after saving layouts. |
 
@@ -286,4 +328,6 @@ For installation issues, see [Client quick start](../readme.md#client-quick-star
 | Admin login | http://localhost:5173/admin/login |
 | Quiz list | http://localhost:5173/admin/quizzes |
 | Quiz builder | http://localhost:5173/admin/quizzes/{id}/builder |
+| Intro / first-screen designer | http://localhost:5173/admin/quizzes/{id}/builder/intro/design |
+| Question designer | http://localhost:5173/admin/quizzes/{id}/builder/design/{questionId} |
 | Public quiz | http://localhost:5173/q/{slug} |

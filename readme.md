@@ -2,7 +2,7 @@
 
 This codebase is published as **TAP V2** at [https://github.com/reubenZtomy/TAPv2](https://github.com/reubenZtomy/TAPv2.git). It is separate from the original client repository ([TAP](https://github.com/reubenZtomy/TAP)).
 
-**How to create and publish a quiz:** See **[docs/HOW_TO_USE.md](docs/HOW_TO_USE.md)** — step-by-step guide for the admin builder (create quiz, design questions, map answers, publish, and share public links). Add screenshots under `docs/images/` when ready.
+**How to create and publish a quiz:** See **[docs/HOW_TO_USE.md](docs/HOW_TO_USE.md)** — step-by-step guide for the admin builder (create quiz, design questions, map answers, publish, and share public links).
 
 ## Client quick start (one-time setup)
 
