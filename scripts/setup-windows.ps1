@@ -7,8 +7,6 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location $Root
 
-$AdminEmail = "admin@tap.local"
-$AdminPassword = "TAPadmin2026"
 $FrontendUrl = "http://localhost:5173"
 $AdminLoginUrl = "$FrontendUrl/admin/login"
 $PublicQuizUrl = "$FrontendUrl/"
@@ -16,10 +14,24 @@ $BackendUrl = "http://127.0.0.1:5000"
 
 $BackendProc = $null
 $FrontendProc = $null
+$EnvWasExisting = $false
 
 function Write-Info($msg) { Write-Host $msg -ForegroundColor Cyan }
 function Write-Ok($msg) { Write-Host $msg -ForegroundColor Green }
 function Write-Err($msg) { Write-Host $msg -ForegroundColor Red }
+
+function Read-DotEnvValue {
+    param([string]$FilePath, [string]$Key)
+    if (-not (Test-Path $FilePath)) { return $null }
+    foreach ($line in Get-Content $FilePath) {
+        $trimmed = $line.Trim()
+        if ($trimmed -match '^\s*#') { continue }
+        if ($trimmed -match "^\s*$([regex]::Escape($Key))\s*=\s*(.*)$") {
+            return $Matches[1].Trim().Trim('"').Trim("'")
+        }
+    }
+    return $null
+}
 
 function Require-Command($name) {
     if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
@@ -82,8 +94,14 @@ try {
         Copy-Item $envExample $envPath
         Write-Ok "  Created backend\.env from backend\.env.example"
     } else {
+        $EnvWasExisting = $true
         Write-Ok "  backend\.env already exists (left unchanged)"
     }
+
+    $AdminEmail = Read-DotEnvValue $envPath "ADMIN_EMAIL"
+    $AdminPassword = Read-DotEnvValue $envPath "ADMIN_PASSWORD"
+    if (-not $AdminEmail) { $AdminEmail = "(missing — set ADMIN_EMAIL in backend\.env)" }
+    if (-not $AdminPassword) { $AdminPassword = "(missing — set ADMIN_PASSWORD in backend\.env)" }
 
     Write-Info "[4/5] Installing frontend dependencies..."
     Push-Location (Join-Path $Root "frontend")
@@ -129,9 +147,12 @@ try {
     Write-Host "  Admin dashboard"
     Write-Host "    $AdminLoginUrl"
     Write-Host ""
-    Write-Host "  Admin login"
+    Write-Host "  Admin login (from backend\.env)"
     Write-Host "    Email:    $AdminEmail"
     Write-Host "    Password: $AdminPassword"
+    if ($EnvWasExisting) {
+        Write-Host "    Note:     Using your existing backend\.env — not the README defaults." -ForegroundColor Yellow
+    }
     Write-Host ""
     Write-Host "  Backend API"
     Write-Host "    $BackendUrl"

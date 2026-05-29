@@ -30,12 +30,9 @@ This guide walks through creating a quiz, designing question screens, mapping an
 ## 1. Sign in to the admin dashboard
 
 1. Open **http://localhost:5173/admin/login** in your browser.
-2. Sign in with the admin credentials from the README:
+2. Sign in with **`ADMIN_EMAIL`** and **`ADMIN_PASSWORD`** from your **`backend/.env`** file.
 
-   | Field | Value |
-   |-------|--------|
-   | Email | `admin@tap.local` |
-   | Password | `TAPadmin2026` |
+   On a **brand-new** install (no `backend/.env` yet), the setup script creates that file from [`.env.example`](../backend/.env.example), which defaults to `admin@tap.local` / `TAPadmin2026`. If you already had `backend/.env`, use **your** values — check the file or the output of `setup-windows.ps1` / `setup-mac.sh`.
 
 3. After login you land on the **Dashboard**. Use the sidebar **Quizzes** to manage quizzes.
 

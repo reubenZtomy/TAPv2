@@ -8,12 +8,27 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-ADMIN_EMAIL="admin@tap.local"
-ADMIN_PASSWORD="TAPadmin2026"
+read_env_value() {
+  local key="$1"
+  local file="backend/.env"
+  if [ ! -f "$file" ]; then
+    echo ""
+    return
+  fi
+  local line
+  line="$(grep -E "^[[:space:]]*${key}=" "$file" | tail -n 1 || true)"
+  if [ -z "$line" ]; then
+    echo ""
+    return
+  fi
+  printf '%s' "${line#*=}" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^["'"'"']//' -e 's/["'"'"']$//'
+}
+
 FRONTEND_URL="http://localhost:5173"
 ADMIN_LOGIN_URL="${FRONTEND_URL}/admin/login"
 PUBLIC_QUIZ_URL="${FRONTEND_URL}/"
 BACKEND_URL="http://127.0.0.1:5000"
+ENV_WAS_EXISTING=0
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -88,8 +103,14 @@ if [ ! -f backend/.env ]; then
   cp backend/.env.example backend/.env
   ok "  Created backend/.env from backend/.env.example"
 else
+  ENV_WAS_EXISTING=1
   ok "  backend/.env already exists (left unchanged)"
 fi
+
+ADMIN_EMAIL="$(read_env_value ADMIN_EMAIL)"
+ADMIN_PASSWORD="$(read_env_value ADMIN_PASSWORD)"
+ADMIN_EMAIL="${ADMIN_EMAIL:-(missing — set ADMIN_EMAIL in backend/.env)}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-(missing — set ADMIN_PASSWORD in backend/.env)}"
 
 info "[4/5] Installing frontend dependencies..."
 (cd frontend && npm install)
@@ -116,9 +137,12 @@ echo ""
 echo -e "  ${BOLD}Admin dashboard${NC}"
 echo "    $ADMIN_LOGIN_URL"
 echo ""
-echo -e "  ${BOLD}Admin login${NC}"
+echo -e "  ${BOLD}Admin login (from backend/.env)${NC}"
 echo "    Email:    $ADMIN_EMAIL"
 echo "    Password: $ADMIN_PASSWORD"
+if [ "$ENV_WAS_EXISTING" -eq 1 ]; then
+  echo "    Note:     Using your existing backend/.env — not the README defaults."
+fi
 echo ""
 echo -e "  ${BOLD}Backend API${NC}"
 echo "    $BACKEND_URL"

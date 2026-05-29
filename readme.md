@@ -10,8 +10,8 @@ Use the setup script for your operating system. Each script runs **once** (or wh
 
 | File | Platform | What it does |
 |------|----------|--------------|
-| [`scripts/setup-mac.sh`](scripts/setup-mac.sh) | macOS / Linux | `python3 -m venv`, `pip install`, `npm install`, copies `backend/.env.example` → `backend/.env`, starts Flask + Vite, prints links and credentials |
-| [`scripts/setup-windows.ps1`](scripts/setup-windows.ps1) | Windows | Same steps using `python` / PowerShell; run from repo root |
+| [`scripts/setup-mac.sh`](scripts/setup-mac.sh) | macOS / Linux | Installs deps, creates `backend/.env` from template **only if missing**, starts servers, prints **actual** login from `backend/.env` |
+| [`scripts/setup-windows.ps1`](scripts/setup-windows.ps1) | Windows | Same as Mac script; run from repo root in PowerShell |
 
 **Prerequisites:** [Python 3.11+](https://www.python.org/downloads/), [Node.js 18+](https://nodejs.org/) (includes `npm`), and Git.
 
@@ -42,16 +42,23 @@ If something fails, check `.setup-backend.log` and `.setup-frontend.log` in the 
 
 ## Admin login (client)
 
-After setup, sign in to the admin dashboard at **http://localhost:5173/admin/login** with:
+Sign in at **http://localhost:5173/admin/login**.
 
-| Field | Value |
-|-------|--------|
-| **Email** | `admin@tap.local` |
-| **Password** | `TAPadmin2026` |
+**Your login is whatever is in `backend/.env`** — not necessarily what you see in this README.
 
-These credentials come from `backend/.env` (created from [`backend/.env.example`](backend/.env.example) on first setup). The backend creates or updates this admin user automatically when it starts.
+| Setting | Where to look |
+|---------|----------------|
+| Email | `ADMIN_EMAIL` in [`backend/.env`](backend/.env) |
+| Password | `ADMIN_PASSWORD` in [`backend/.env`](backend/.env) |
 
-**Change the password:** Edit `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `backend/.env`, then restart the backend.
+**First-time setup only:** if `backend/.env` does not exist yet, the setup script copies [`backend/.env.example`](backend/.env.example), which defaults to:
+
+- Email: `admin@tap.local`
+- Password: `TAPadmin2026`
+
+**If `backend/.env` already exists** (for example you cloned the repo or ran setup before), the script **does not overwrite it**. The README defaults may be wrong for your machine — open `backend/.env` or read the values printed at the end of `setup-windows.ps1` / `setup-mac.sh`.
+
+After changing `ADMIN_EMAIL` or `ADMIN_PASSWORD`, **restart the Flask backend** so the admin user in the database is updated.
 
 **Dev auto-login:** In development, visiting http://localhost:5173/admin/login may sign you in automatically. Disable with `DEV_AUTO_LOGIN=false` in `backend/.env`.
 
