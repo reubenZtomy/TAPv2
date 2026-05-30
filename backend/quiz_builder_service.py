@@ -105,8 +105,34 @@ def load_quiz_builder(quiz_id: int) -> dict | None:
             'can_publish': True,
             'missing_question_keys': [],
         }
+        quiz['custom_results'] = _parse_custom_results(quiz.get('custom_results_json'))
 
     return quiz
+
+
+def _parse_custom_results(raw: str | None) -> list:
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+        return parsed if isinstance(parsed, list) else []
+    except json.JSONDecodeError:
+        return []
+
+
+def save_custom_results(quiz_id: int, rules: list) -> tuple[dict | None, str | None]:
+    if not isinstance(rules, list):
+        return None, 'rules must be an array'
+    now = _utc_now()
+    with get_connection() as conn:
+        row = conn.execute('SELECT id FROM quizzes WHERE id = ?', (quiz_id,)).fetchone()
+        if not row:
+            return None, 'Quiz not found'
+        conn.execute(
+            'UPDATE quizzes SET custom_results_json = ?, updated_at = ? WHERE id = ?',
+            (json.dumps(rules), now, quiz_id),
+        )
+    return load_quiz_builder(quiz_id), None
 
 
 def validate_publish(quiz_id: int) -> tuple[bool, list[str], str | None]:

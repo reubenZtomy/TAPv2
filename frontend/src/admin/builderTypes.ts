@@ -1,4 +1,5 @@
 import type { QuizRecord } from './api'
+import type { CustomResultRule } from './customResults'
 import type { IntroLayout } from './layoutTypes'
 
 export type QuizLanguage = {
@@ -48,6 +49,7 @@ export type QuizBuilderPayload = QuizRecord & {
   questions: QuizQuestion[]
   intro_layout: IntroLayout
   publish_validation: PublishValidation
+  custom_results?: CustomResultRule[]
 }
 
 export const LAYOUT_TYPE_OPTIONS = [

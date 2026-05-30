@@ -7,7 +7,7 @@ from contextlib import contextmanager
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'auth.db')
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 
 def get_db_path() -> str:
@@ -65,6 +65,12 @@ def _migrate_quiz_custom_font(cursor):
         cursor.execute('ALTER TABLE quizzes ADD COLUMN custom_font_family TEXT')
     if 'custom_font_filename' not in columns:
         cursor.execute('ALTER TABLE quizzes ADD COLUMN custom_font_filename TEXT')
+
+
+def _migrate_quiz_custom_results(cursor):
+    columns = _table_columns(cursor, 'quizzes')
+    if 'custom_results_json' not in columns:
+        cursor.execute('ALTER TABLE quizzes ADD COLUMN custom_results_json TEXT')
 
 
 def _create_admin_tables(cursor):
@@ -230,6 +236,7 @@ def init_db():
         _create_admin_tables(cursor)
         _migrate_quiz_intro_layout(cursor)
         _migrate_quiz_custom_font(cursor)
+        _migrate_quiz_custom_results(cursor)
         cursor.execute(
             'INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)',
             (SCHEMA_VERSION,),

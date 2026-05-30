@@ -85,8 +85,18 @@ export function QuestionDesignPreviewModal({
     [allQuestions, pendingByQuestion]
   )
   const matchedResult = useMemo(
-    () => (atEnd ? matchCustomResultRule(customResults, previewAnswers) : null),
-    [atEnd, customResults, previewAnswers]
+    () =>
+      atEnd
+        ? matchCustomResultRule(customResults, previewAnswers, {
+            selectedLanguage: languageCode,
+            defaultLanguage: languageCode,
+            knownLanguageCodes: allQuestions.flatMap((q) =>
+              q.options.flatMap((o) => Object.keys(o.labels || {}))
+            ),
+            questions: allQuestions,
+          })
+        : null,
+    [atEnd, customResults, previewAnswers, languageCode, allQuestions]
   )
 
   if (!open || !question) return null

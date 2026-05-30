@@ -156,9 +156,25 @@ def resolve_public_quiz(slug: str) -> dict:
             'question_key': q['question_key'],
             'layout_type': q['layout_type'],
             'layout': q.get('layout') or {},
+            'options': [
+                {
+                    'option_key': opt.get('option_key') or '',
+                    'labels': opt.get('labels') or {},
+                }
+                for opt in (q.get('options') or [])
+            ],
         }
         for q in sorted_questions
     ]
+    custom_results = []
+    raw_custom = quiz.get('custom_results_json')
+    if raw_custom:
+        try:
+            parsed = json.loads(raw_custom)
+            if isinstance(parsed, list):
+                custom_results = parsed
+        except json.JSONDecodeError:
+            custom_results = []
 
     return {
         'available': True,
@@ -184,6 +200,7 @@ def resolve_public_quiz(slug: str) -> dict:
         'custom_font': custom_font_payload(quiz),
         'question_order': question_order,
         'questions_layout': questions_layout,
+        'custom_results': custom_results,
     }
 
 

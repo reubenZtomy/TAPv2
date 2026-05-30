@@ -21,10 +21,12 @@ import { ResultDesignPreviewModal } from '../components/ResultDesignPreviewModal
 import {
   collectQuestionOptionChoices,
   isResultScreenDesigned,
+  hydrateCustomResultsFromServer,
   loadCustomResults,
+  relaxAutoAssignedLanguageConditions,
   resolveConditionOptionKey,
   sanitizeResultRuleConditions,
-  saveCustomResults,
+  persistCustomResults,
   type CustomResultRule,
 } from '../customResults'
 import { TableRowActionsMenu } from '../components/TableRowActionsMenu'
@@ -75,9 +77,7 @@ export function AdminQuizBuilderPage() {
   const [duplicateSourceQuestionId, setDuplicateSourceQuestionId] = useState<number | null>(null)
   const [duplicateTargetQuestionId, setDuplicateTargetQuestionId] = useState<number | null>(null)
   const [duplicating, setDuplicating] = useState(false)
-  const [customResults, setCustomResults] = useState<CustomResultRule[]>(() =>
-    !Number.isNaN(quizId) && quizId ? loadCustomResults(quizId) : []
-  )
+  const [customResults, setCustomResults] = useState<CustomResultRule[]>([])
   const skipPersistCustomResults = useRef(true)
   const [editingResultId, setEditingResultId] = useState<string | null>(null)
   const [resultDraft, setResultDraft] = useState<CustomResultRule | null>(null)
@@ -111,6 +111,16 @@ export function AdminQuizBuilderPage() {
         if (prev && data.quiz.questions.some((q) => q.id === prev)) return prev
         return data.quiz.questions[0]?.id ?? null
       })
+      const serverRules = data.quiz.custom_results ?? []
+      const localRules = relaxAutoAssignedLanguageConditions(loadCustomResults(quizId), defaultLang)
+      if ((!serverRules || serverRules.length === 0) && localRules.length > 0) {
+        setCustomResults(localRules)
+        skipPersistCustomResults.current = false
+      } else {
+        const rules = hydrateCustomResultsFromServer(quizId, serverRules, defaultLang)
+        setCustomResults(rules)
+        skipPersistCustomResults.current = true
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load quiz')
     } finally {
@@ -139,17 +149,13 @@ export function AdminQuizBuilderPage() {
 
   useEffect(() => {
     if (!quizId || Number.isNaN(quizId)) return
-    setCustomResults(loadCustomResults(quizId))
-    skipPersistCustomResults.current = true
-  }, [quizId])
-
-  useEffect(() => {
-    if (!quizId || Number.isNaN(quizId)) return
     if (skipPersistCustomResults.current) {
       skipPersistCustomResults.current = false
       return
     }
-    saveCustomResults(quizId, customResults)
+    void persistCustomResults(quizId, customResults).catch((e) => {
+      setError(e instanceof Error ? e.message : 'Failed to save answer rules')
+    })
   }, [quizId, customResults])
 
   const applyQuiz = (payload: QuizBuilderPayload) => {
@@ -526,8 +532,6 @@ export function AdminQuizBuilderPage() {
                               {
                                 questionKey: firstQuestion.question_key,
                                 optionKey: firstOption.key,
-                                languageCode:
-                                  quiz.languages.length > 0 ? editLang : undefined,
                               },
                             ]
                           : [],
@@ -543,7 +547,8 @@ export function AdminQuizBuilderPage() {
           </div>
           <p className="admin-muted">
             Define result rules by mapping question option selections to a custom result outcome.
-            When multiple languages are configured, each condition can also require a specific language.
+            Conditions default to <strong>Any language</strong>. Only set a specific language when that
+            result should appear for one language only (e.g. Chinese copy vs English copy).
           </p>
 
           {customResults.length === 0 ? (
@@ -620,7 +625,6 @@ export function AdminQuizBuilderPage() {
                                 if (!window.confirm(`Delete result rule "${rule.name || 'Untitled'}"?`)) return
                                 setCustomResults((prev) => {
                                   const next = prev.filter((r) => r.id !== rule.id)
-                                  saveCustomResults(quizId, next)
                                   return next
                                 })
                               },
@@ -982,8 +986,6 @@ export function AdminQuizBuilderPage() {
                               {
                                 questionKey: q.question_key,
                                 optionKey: option.key,
-                                languageCode:
-                                  quiz.languages.length > 0 ? editLang : undefined,
                               },
                             ],
                           },
@@ -1040,7 +1042,6 @@ export function AdminQuizBuilderPage() {
                       editingResultId === 'new'
                         ? [...prev, resultDraft]
                         : prev.map((r) => (r.id === editingResultId ? resultDraft : r))
-                    saveCustomResults(quizId, next)
                     return next
                   })
                   setMessage('Answer logic saved')

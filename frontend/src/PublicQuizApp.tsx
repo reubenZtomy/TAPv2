@@ -17,7 +17,15 @@ import { QuizLayoutScreen } from './layout/QuizLayoutScreen'
 import { TitleScreen } from './screens/TitleScreen'
 import { QuizContent } from './types/quizContent'
 import { nextQuestionKey, prevQuestionKey } from './utils/quizFlow'
-import { loadCustomResults, resolveLayoutAnswerKey, resolveResultLayoutForLanguage, matchCustomResultRule, type CustomResultRule } from './admin/customResults'
+import {
+  loadCustomResults,
+  parseCustomResultsRules,
+  resolveLayoutAnswerKey,
+  resolveResultLayoutForLanguage,
+  matchCustomResultRule,
+  type AnswerMatchQuestion,
+  type CustomResultRule,
+} from './admin/customResults'
 import { applyLayoutLanguage } from './admin/layoutI18n'
 
 type QuizAnswers = Record<string, string>
@@ -40,6 +48,29 @@ export function PublicQuizApp({ publicQuiz }: PublicQuizAppProps) {
   )
 
   const questionsLayout = useMemo(() => publicQuiz.questions_layout ?? [], [publicQuiz.questions_layout])
+  const answerMatchQuestions = useMemo<AnswerMatchQuestion[]>(
+    () =>
+      questionsLayout.map((q) => ({
+        question_key: q.question_key,
+        layout: q.layout,
+        options: (q.options ?? []).map((opt, index) => ({
+          id: index,
+          question_id: q.id,
+          option_key: opt.option_key,
+          order_index: index,
+          labels: opt.labels ?? {},
+        })),
+      })),
+    [questionsLayout]
+  )
+  const customResultRules = useMemo(() => {
+    if (publicQuiz.custom_results && publicQuiz.custom_results.length > 0) {
+      return parseCustomResultsRules(publicQuiz.custom_results)
+    }
+    const quizId = publicQuiz.quiz?.id
+    if (quizId) return loadCustomResults(quizId)
+    return []
+  }, [publicQuiz.custom_results, publicQuiz.quiz?.id])
   const layoutQuestionIds = useMemo(() => questionsLayout.map((q) => q.id), [questionsLayout])
   const introLayoutElements = useMemo(
     () => getLayoutElements(publicQuiz.intro_layout?.elements),
@@ -139,19 +170,20 @@ export function PublicQuizApp({ publicQuiz }: PublicQuizAppProps) {
   const finishQuiz = useCallback(
     (answers: QuizAnswers) => {
       setQuizAnswers(answers)
-      const quizId = publicQuiz.quiz?.id
-      if (quizId) {
-        const customRules = loadCustomResults(quizId)
-        if (customRules.length > 0) {
-          const matched = matchCustomResultRule(customRules, answers, selectedLanguage)
-          setCustomResultRule(matched || null)
-          setScreen(matched ? 'customResult' : 'noResult')
-          return
-        }
+      if (customResultRules.length > 0) {
+        const matched = matchCustomResultRule(customResultRules, answers, {
+          selectedLanguage,
+          defaultLanguage,
+          knownLanguageCodes: publicQuiz.languages,
+          questions: answerMatchQuestions,
+        })
+        setCustomResultRule(matched || null)
+        setScreen(matched ? 'customResult' : 'noResult')
+        return
       }
       setScreen('complete')
     },
-    [publicQuiz, selectedLanguage]
+    [customResultRules, selectedLanguage, defaultLanguage, publicQuiz.languages, answerMatchQuestions]
   )
 
   const navigateNext = useCallback(

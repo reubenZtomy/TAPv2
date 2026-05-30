@@ -189,6 +189,105 @@ export function saveCustomResults(quizId: number, rules: CustomResultRule[]): vo
   localStorage.setItem(customResultsStorageKey(quizId), JSON.stringify(rules))
 }
 
+export function parseCustomResultsRules(raw: unknown): CustomResultRule[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map((item) => normalizeRule(item as StoredRule))
+}
+
+export function hydrateCustomResultsFromServer(
+  quizId: number,
+  serverRules: unknown,
+  defaultLanguage?: string
+): CustomResultRule[] {
+  let rules = parseCustomResultsRules(serverRules)
+  if (defaultLanguage) {
+    rules = relaxAutoAssignedLanguageConditions(rules, defaultLanguage)
+  }
+  saveCustomResults(quizId, rules)
+  return rules
+}
+
+export async function persistCustomResults(
+  quizId: number,
+  rules: CustomResultRule[]
+): Promise<void> {
+  saveCustomResults(quizId, rules)
+  const { saveCustomResultsToServer } = await import('./api')
+  await saveCustomResultsToServer(quizId, rules)
+}
+
+export type AnswerMatchQuestion = Pick<QuizQuestion, 'question_key' | 'options' | 'layout'>
+
+function languageCodesForQuestion(q: AnswerMatchQuestion): string[] {
+  const codes = new Set<string>()
+  for (const opt of q.options ?? []) {
+    for (const code of Object.keys(opt.labels || {})) {
+      if (code.trim()) codes.add(code.trim())
+    }
+  }
+  return Array.from(codes)
+}
+
+function labelForOptionKey(
+  questionKey: string,
+  optionKey: string,
+  questions: AnswerMatchQuestion[] | undefined,
+  lang: string
+): string {
+  const q = questions?.find((x) => x.question_key === questionKey)
+  if (!q) return optionKey
+  const choices = collectQuestionOptionChoices(q, lang)
+  const found = choices.find((c) => normalizeAnswerKey(c.key) === normalizeAnswerKey(optionKey))
+  return found?.label?.trim() || optionKey
+}
+
+function normalizeLang(value: string | undefined): string {
+  return (value || '').trim().toLowerCase()
+}
+
+/** Match student language to a condition (empty condition language = any). */
+export function languageConditionMatches(
+  selectedLanguage: string | undefined,
+  conditionLanguage: string | undefined,
+  defaultLanguage?: string,
+  knownLanguageCodes?: string[]
+): boolean {
+  if (!conditionLanguage?.trim()) return true
+  const selected = (selectedLanguage?.trim() || defaultLanguage?.trim() || '').trim()
+  if (!selected) return false
+  if (normalizeLang(selected) === normalizeLang(conditionLanguage)) return true
+  const known = knownLanguageCodes ?? []
+  const resolveCode = (token: string) => {
+    const norm = normalizeLang(token)
+    const exact = known.find((code) => normalizeLang(code) === norm)
+    return exact ?? token
+  }
+  return normalizeLang(resolveCode(selected)) === normalizeLang(resolveCode(conditionLanguage))
+}
+
+function conditionAnswerMatches(
+  questionKey: string,
+  expected: string | undefined,
+  answers: Record<string, string>,
+  questions: AnswerMatchQuestion[] | undefined,
+  primaryLang: string
+): boolean {
+  const actual = answers[questionKey]
+  if (normalizeAnswerKey(actual) === normalizeAnswerKey(expected)) return true
+  if (!questions?.length || !actual?.trim() || !expected?.trim()) return false
+
+  const q = questions.find((x) => x.question_key === questionKey)
+  if (!q) return false
+
+  const langsToTry = new Set<string>([primaryLang, ...languageCodesForQuestion(q)])
+  for (const lang of langsToTry) {
+    const actualLabel = normalizeAnswerKey(labelForOptionKey(questionKey, actual, questions, lang))
+    const expectedLabel = normalizeAnswerKey(labelForOptionKey(questionKey, expected, questions, lang))
+    if (actualLabel && expectedLabel && actualLabel === expectedLabel) return true
+  }
+  return false
+}
+
 export function isResultScreenDesigned(rule: CustomResultRule): boolean {
   if (getLayoutElements(rule.layout).length > 0) return true
   const bg = getScreenBackgroundSettings(rule.layout)
@@ -266,14 +365,26 @@ export function answersFromQuestionIds(
 }
 
 /** Same matching order as the public quiz: most conditions first, all must match. */
+export type MatchCustomResultOptions = {
+  selectedLanguage?: string
+  defaultLanguage?: string
+  knownLanguageCodes?: string[]
+  questions?: AnswerMatchQuestion[]
+}
+
 export function matchCustomResultRule(
   rules: CustomResultRule[],
   answers: Record<string, string>,
-  selectedLanguage?: string
+  selectedLanguageOrOptions?: string | MatchCustomResultOptions,
+  questions?: AnswerMatchQuestion[]
 ): CustomResultRule | null {
-  const normalizeLang = (value: string | undefined) => (value || '').trim().toLowerCase()
-  const conditionMatches = (questionKey: string, expected: string | undefined) =>
-    normalizeAnswerKey(answers[questionKey]) === normalizeAnswerKey(expected)
+  const opts: MatchCustomResultOptions =
+    typeof selectedLanguageOrOptions === 'string' || selectedLanguageOrOptions === undefined
+      ? { selectedLanguage: selectedLanguageOrOptions, questions }
+      : selectedLanguageOrOptions
+
+  const primaryLang =
+    opts.selectedLanguage?.trim() || opts.defaultLanguage?.trim() || 'English'
 
   return (
     [...rules]
@@ -282,10 +393,23 @@ export function matchCustomResultRule(
         (rule) =>
           rule.conditions.length > 0 &&
           rule.conditions.every((cond) => {
-            if (cond.languageCode?.trim()) {
-              if (normalizeLang(selectedLanguage) !== normalizeLang(cond.languageCode)) return false
+            if (
+              !languageConditionMatches(
+                opts.selectedLanguage,
+                cond.languageCode,
+                opts.defaultLanguage ?? primaryLang,
+                opts.knownLanguageCodes
+              )
+            ) {
+              return false
             }
-            return conditionMatches(cond.questionKey, cond.optionKey)
+            return conditionAnswerMatches(
+              cond.questionKey,
+              cond.optionKey,
+              answers,
+              opts.questions,
+              primaryLang
+            )
           })
       ) ?? null
   )
@@ -300,6 +424,17 @@ export function resolveResultLayoutForLanguage(
   return rule.layout
 }
 
+function optionKeyExistsForQuestion(q: QuizQuestion, optionKey: string, lang: string): boolean {
+  const trimmed = optionKey.trim()
+  if (!trimmed) return false
+  const langs = new Set<string>([lang, ...languageCodesForQuestion(q)])
+  for (const code of langs) {
+    const options = collectQuestionOptionChoices(q, code)
+    if (options.some((o) => o.key === trimmed)) return true
+  }
+  return false
+}
+
 export function sanitizeResultRuleConditions(
   rule: CustomResultRule,
   questions: QuizQuestion[],
@@ -310,11 +445,30 @@ export function sanitizeResultRuleConditions(
     conditions: rule.conditions.map((c) => {
       const q = questions.find((x) => x.question_key === c.questionKey)
       const options = q ? collectQuestionOptionChoices(q, lang) : []
+      const keepKey = q && optionKeyExistsForQuestion(q, c.optionKey, lang)
       return {
         questionKey: c.questionKey,
-        optionKey: resolveConditionOptionKey(c.optionKey, options),
+        optionKey: keepKey ? c.optionKey.trim() : resolveConditionOptionKey(c.optionKey, options),
         languageCode: c.languageCode?.trim() || undefined,
       }
     }),
   }
+}
+
+/** Rules saved before "Any language" default often pinned the builder preview language on every condition. */
+export function relaxAutoAssignedLanguageConditions(
+  rules: CustomResultRule[],
+  defaultLanguage: string
+): CustomResultRule[] {
+  const normDefault = normalizeLang(defaultLanguage)
+  return rules.map((rule) => ({
+    ...rule,
+    conditions: rule.conditions.map((c) => {
+      if (!c.languageCode?.trim()) return c
+      if (normalizeLang(c.languageCode) === normDefault) {
+        return { ...c, languageCode: undefined }
+      }
+      return c
+    }),
+  }))
 }

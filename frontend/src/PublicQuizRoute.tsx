@@ -6,11 +6,17 @@ import type { IntroLayout } from './admin/layoutTypes'
 import type { QuizContent } from './types/quizContent'
 import type { QuizCustomFont } from './utils/quizFont'
 
+export type PublicQuestionOption = {
+  option_key: string
+  labels: Record<string, string>
+}
+
 export type PublicQuestionLayout = {
   id: number
   question_key: string
   layout_type: string
   layout: Record<string, unknown>
+  options?: PublicQuestionOption[]
 }
 
 export type PublicQuizPayload = {
@@ -29,6 +35,7 @@ export type PublicQuizPayload = {
   intro_layout?: IntroLayout
   custom_font?: QuizCustomFont | null
   questions_layout?: PublicQuestionLayout[]
+  custom_results?: unknown[]
 }
 
 export function PublicQuizRoute() {

@@ -1,3 +1,4 @@
+import type { CustomResultRule } from './customResults'
 import type { QuizBuilderPayload } from './builderTypes'
 import type { QuizCustomFont } from '../utils/quizFont'
 
@@ -174,7 +175,16 @@ export function updateQuiz(id: number, body: Partial<QuizRecord>) {
 }
 
 export function fetchQuizBuilder(quizId: number) {
-  return adminFetch(`/api/admin/quizzes/${quizId}/builder`) as Promise<{ quiz: QuizBuilderPayload }>
+  return adminFetch(`/api/admin/quizzes/${quizId}/builder`) as Promise<{
+    quiz: QuizBuilderPayload & { custom_results?: CustomResultRule[] }
+  }>
+}
+
+export function saveCustomResultsToServer(quizId: number, rules: CustomResultRule[]) {
+  return adminFetch(`/api/admin/quizzes/${quizId}/custom-results`, {
+    method: 'PUT',
+    body: JSON.stringify({ rules }),
+  }) as Promise<{ custom_results: CustomResultRule[] }>
 }
 
 export function publishQuiz(quizId: number) {

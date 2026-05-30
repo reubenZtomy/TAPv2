@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { fetchQuizBuilder, publishQuiz, saveQuizDraft } from '../api'
 import {
-  loadCustomResults,
+  hydrateCustomResultsFromServer,
   resolveResultLayoutSource,
-  saveCustomResults,
+  persistCustomResults,
   updateResultLayoutForLanguage,
   type CustomResultRule,
 } from '../customResults'
@@ -22,6 +22,7 @@ export function AdminResultScreenDesignPage() {
   const [customResults, setCustomResults] = useState<CustomResultRule[]>([])
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(true)
   const [designLanguage, setDesignLanguage] = useState('English')
 
   const load = useCallback(async () => {
@@ -31,11 +32,11 @@ export function AdminResultScreenDesignPage() {
     try {
       const data = await fetchQuizBuilder(quizId)
       setQuiz(data.quiz)
-      setCustomResults(loadCustomResults(quizId))
       const defaultLang =
         data.quiz.languages.find((l) => l.is_default)?.language_code ||
         data.quiz.languages[0]?.language_code ||
         'English'
+      setCustomResults(hydrateCustomResultsFromServer(quizId, data.quiz.custom_results ?? [], defaultLang))
       setDesignLanguage(defaultLang)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load quiz')
@@ -87,7 +88,9 @@ export function AdminResultScreenDesignPage() {
       defaultLanguage
     )
     setCustomResults(next)
-    saveCustomResults(quizId, next)
+    void persistCustomResults(quizId, next).catch((e) =>
+      setError(e instanceof Error ? e.message : 'Failed to save answer rules')
+    )
   }
 
   const handleDraft = async () => {

@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 from auth_utils import admin_required
 from database import get_connection, row_to_dict
 from quiz_builder_constants import LAYOUT_TYPES, default_layout_json
-from quiz_builder_service import load_quiz_builder, validate_publish
+from quiz_builder_service import load_quiz_builder, save_custom_results, validate_publish
 from quiz_font_service import delete_quiz_font, save_quiz_font
 from quiz_language_json import import_quiz_language_json
 from quiz_layout_presets import get_layout_preset, list_layout_presets
@@ -184,6 +184,20 @@ def get_quiz_builder(admin_user, quiz_id):
     if not payload:
         return jsonify({'error': 'Quiz not found'}), 404
     return jsonify({'quiz': payload})
+
+
+@admin_builder_bp.route('/quizzes/<int:quiz_id>/custom-results', methods=['PUT'])
+@admin_required
+def put_custom_results(admin_user, quiz_id):
+    body = request.get_json(silent=True) or {}
+    rules = body.get('rules')
+    if rules is None:
+        return jsonify({'error': 'rules is required'}), 400
+    payload, err = save_custom_results(quiz_id, rules)
+    if err:
+        status = 404 if err == 'Quiz not found' else 400
+        return jsonify({'error': err}), status
+    return jsonify({'quiz': payload, 'custom_results': payload.get('custom_results') or []})
 
 
 @admin_builder_bp.route('/quizzes/<int:quiz_id>/publish', methods=['POST'])

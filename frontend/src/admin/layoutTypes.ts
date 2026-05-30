@@ -657,9 +657,11 @@ export function isLayoutAnswerChoice(el: LayoutElement): boolean {
   return Boolean((el.content || el.placeholder || '').trim())
 }
 
-/** Stable unique key for each answer control (derived from element id). */
+/** Stable key for each answer control (explicit optionKey/recordOption, else derived from element id). */
 export function layoutElementOptionKey(el: LayoutElement): string {
   if (!isLayoutAnswerChoice(el)) return ''
+  const explicit = el.optionKey?.trim() || el.action?.recordOption?.trim()
+  if (explicit) return explicit
   return defaultLayoutElementOptionKey(el)
 }
 
